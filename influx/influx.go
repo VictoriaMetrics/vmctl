@@ -139,7 +139,14 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 		return nil, nil, err
 	}
 
-	// TODO: check number of results
+	if resp.Err != "" {
+		return nil, nil, fmt.Errorf("response error: %s", resp.Err)
+	}
+
+	if len(resp.Results) != 1 {
+		return nil, nil, fmt.Errorf("unexpected number of results in response: %d", len(resp.Results))
+	}
+
 	results, err := parse(resp.Results[0])
 	if err != nil {
 		return nil, nil, err
@@ -170,13 +177,8 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 // FetchDataPoints performs SELECT request to fetch
 // datapoints for particular field.
 func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
-	q := fmt.Sprintf("select %s from %s where ", s.Field, s.Measurement)
-	for i, pair := range s.LabelPairs {
-		q += fmt.Sprintf("%s='%s'", pair.Name, pair.Value)
-		if i != len(s.LabelPairs)-1 {
-			q += " AND "
-		}
-	}
+	filter := getFilter(c.filter, s.LabelPairs)
+	q := fmt.Sprintf("select %s from %s %s", s.Field, s.Measurement, filter)
 	iq := influx.Query{
 		Command:         q,
 		Database:        c.database,
@@ -189,6 +191,31 @@ func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
 		return nil, fmt.Errorf("query %q err: %s", iq.Command, err)
 	}
 	return &ChunkedResponse{cr, s.Field}, nil
+}
+
+func getFilter(filter string, labelPairs []LabelPair) string {
+	if filter == "" && len(labelPairs) == 0 {
+		return ""
+	}
+
+	f := &strings.Builder{}
+	f.WriteString("where ")
+	for i, pair := range labelPairs {
+		fmt.Fprintf(f, "%s='%s'", pair.Name, pair.Value)
+		if i != len(labelPairs)-1 {
+			f.WriteString(" AND ")
+		}
+	}
+
+	if filter != "" {
+		if len(labelPairs) > 0 {
+			fmt.Fprintf(f, " AND %s", filter)
+		} else {
+			f.WriteString(filter)
+		}
+	}
+
+	return f.String()
 }
 
 func parseDate(dateStr string) (int64, error) {
@@ -220,10 +247,8 @@ func (c *Client) getFieldKeys() ([]string, error) {
 }
 
 func (c *Client) getSeries(filter string) ([]string, error) {
-	com := "show series"
-	if filter != "" {
-		com += " " + filter
-	}
+	f := getFilter(c.filter, nil)
+	com := fmt.Sprintf("show series %s", f)
 	q := influx.Query{
 		Command:         com,
 		Database:        c.database,
@@ -246,6 +271,9 @@ func (c *Client) getSeries(filter string) ([]string, error) {
 				break
 			}
 			return nil, err
+		}
+		if resp.Err != "" {
+			return nil, fmt.Errorf("response error for query %q: %s", q.Command, resp.Err)
 		}
 		values, err := parse(resp.Results[0])
 		if err != nil {

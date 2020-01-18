@@ -7,6 +7,7 @@ const (
 	vmAccountID   = "vm-account-id"
 	vmConcurrency = "vm-concurrency"
 	vmCompress    = "vm-compress"
+	vmBatchSize   = "vm-batch-size"
 )
 
 var (
@@ -32,17 +33,23 @@ var (
 			Value: true,
 			Usage: "Whether to apply gzip compression to import requests",
 		},
+		&cli.IntFlag{
+			Name:  vmBatchSize,
+			Value: 200e3,
+			Usage: "How many datapoints importer collects before sending the import request to VM",
+		},
 	}
 )
 
 const (
-	influxAddr      = "influx-addr"
-	influxUser      = "influx-user"
-	influxPassword  = "influx-password"
-	influxDB        = "influx-database"
-	influxRetention = "influx-retention-policy"
-	influxFilter    = "influx-series-filter"
-	influxChunkSize = "influx-chunk-size"
+	influxAddr        = "influx-addr"
+	influxUser        = "influx-user"
+	influxPassword    = "influx-password"
+	influxDB          = "influx-database"
+	influxRetention   = "influx-retention-policy"
+	influxFilter      = "influx-series-filter"
+	influxChunkSize   = "influx-chunk-size"
+	influxConcurrency = "influx-concurrency"
 )
 
 var (
@@ -80,6 +87,11 @@ var (
 			Name:  influxChunkSize,
 			Usage: "The chunkSize defines max amount of series to be returned in one chunk",
 			Value: 10e3,
+		},
+		&cli.IntFlag{
+			Name:  influxConcurrency,
+			Usage: "Number of concurrently running fetch queries to InfluxDB",
+			Value: 1,
 		},
 	}
 )

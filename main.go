@@ -2,16 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	_ "net/http/pprof"
-
-	"github.com/cheggaaa/pb/v3"
 	"github.com/urfave/cli/v2"
 	"github.com/victoriametrics/vmctl/influx"
 	"github.com/victoriametrics/vmctl/vm"
@@ -24,6 +21,7 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
+	start := time.Now()
 	app := &cli.App{
 		Name:    "VictoriaMetrics migrate cli tool",
 		Version: version,
@@ -60,7 +58,8 @@ func main() {
 						return fmt.Errorf("failed to create VM importer: %s", err)
 					}
 
-					return importInflux(influxClient, importer)
+					processor := newInfluxProcessor(influxClient, importer, c.Int(influxConcurrency))
+					return processor.run()
 				},
 			},
 			{
@@ -79,7 +78,7 @@ func main() {
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\r- Ctrl+C pressed in Terminal")
+		fmt.Println("\r- Execution cancelled")
 		os.Exit(0)
 	}()
 
@@ -87,69 +86,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func importInflux(ic *influx.Client, importer *vm.Importer) error {
-	series, err := ic.Explore()
-	if err != nil {
-		return fmt.Errorf("explore query failed: %s", err)
-	}
-	if len(series) < 1 {
-		return fmt.Errorf("found no timeseries to export")
-	}
-
-	question := fmt.Sprintf("Found %d timeseries to import. Continue?", len(series))
-	if !prompt(question) {
-		return nil
-	}
-
-	bar := pb.StartNew(len(series))
-	go func() {
-		for {
-			ie := <-importer.Errors()
-			var errTS string
-			for _, ts := range ie.Batch {
-				errTS += fmt.Sprintf("%s for timestamps range %d - %d\n",
-					ts.String(), ts.Timestamps[0], ts.Timestamps[len(ts.Timestamps)-1])
-			}
-			log.Fatalf("Import process failed for \n%sWith error: %s", errTS, ie.Err)
-		}
-	}()
-
-	var total int
-	for _, s := range series {
-		cr, err := ic.FetchDataPoints(s)
-		if err != nil {
-			return fmt.Errorf("failed to fetch datapoints: %s", err)
-		}
-		name := fmt.Sprintf("%s_%s", s.Measurement, s.Field)
-		labels := make([]vm.LabelPair, len(s.LabelPairs))
-		for i, lp := range s.LabelPairs {
-			labels[i] = vm.LabelPair{
-				Name:  lp.Name,
-				Value: lp.Value,
-			}
-		}
-
-	chunks:
-		for {
-			time, values, err := cr.Next()
-			if err == io.EOF {
-				break chunks
-			}
-			total += len(values)
-			importer.Input() <- &vm.TimeSeries{
-				Name:       name,
-				LabelPairs: labels,
-				Timestamps: time,
-				Values:     values,
-			}
-		}
-		bar.Increment()
-	}
-
-	importer.Close()
-	bar.Finish()
-	log.Printf("Import finished:\n%s", importer.Stats())
-	return nil
+	log.Printf("Total time: %v\n", time.Since(start))
 }

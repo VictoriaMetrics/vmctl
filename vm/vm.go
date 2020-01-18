@@ -10,27 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
-
-// Importer performs insertion of timeseries
-// via VictoriaMetrics import protocol
-// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/master#how-to-import-time-series-data
-type Importer struct {
-	addr       string
-	importPath string
-	compress   bool
-
-	close  chan struct{}
-	input  chan *TimeSeries
-	errors chan *ImportError
-
-	wg   sync.WaitGroup
-	once sync.Once
-
-	s stats
-}
 
 // Config contains list of params to configure
 // the Importer
@@ -47,25 +28,59 @@ type Config struct {
 	// AccountID for cluster version
 	// Less than 0 assumes single node version
 	AccountID int
+	// BatchSize defines how many datapoints
+	// importer collects before sending the import request
+	BatchSize int
 }
 
-type stats struct {
-	datapoints uint64
-	bytes      uint64
-	requests   uint64
-	// todo: latency
+// Importer performs insertion of timeseries
+// via VictoriaMetrics import protocol
+// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/master#how-to-import-time-series-data
+type Importer struct {
+	addr       string
+	importPath string
+	compress   bool
+	batchSize  int
+
+	close  chan struct{}
+	input  chan *TimeSeries
+	errors chan *ImportError
+
+	wg   sync.WaitGroup
+	once sync.Once
+
+	s stats
 }
 
-func (im Importer) Stats() string {
+func (im *Importer) Stats() string {
 	return im.s.String()
 }
 
-func (s stats) String() string {
-	datapoints := atomic.LoadUint64(&s.datapoints)
-	bytes := atomic.LoadUint64(&s.bytes)
-	requests := atomic.LoadUint64(&s.requests)
-	return fmt.Sprintf("  datapoints: %d;\n  bytes: %s;\n  import requests: %d",
-		datapoints, byteCountSI(int64(bytes)), requests)
+type stats struct {
+	sync.Mutex
+	datapoints     uint64
+	bytes          uint64
+	requests       uint64
+	startTime      time.Time
+	importDuration time.Duration
+	idleDuration   time.Duration
+}
+
+func (s *stats) String() string {
+	s.Lock()
+	defer s.Unlock()
+	return fmt.Sprintf("VictoriaMetrics importer stats:\n"+
+		"  time spent while waiting: %v;\n"+
+		"  time spent while importing: %v;\n"+
+		"  total datapoints: %d;\n"+
+		"  datapoints/s: %.2f;\n"+
+		"  total bytes: %s;\n"+
+		"  bytes/s: %s;\n"+
+		"  import requests: %d;",
+		s.idleDuration, s.importDuration,
+		s.datapoints, float64(s.datapoints)/s.importDuration.Seconds(),
+		byteCountSI(int64(s.bytes)), byteCountSI(int64(float64(s.bytes)/s.importDuration.Seconds())),
+		s.requests)
 }
 
 func NewImporter(cfg Config) (*Importer, error) {
@@ -74,7 +89,6 @@ func NewImporter(cfg Config) (*Importer, error) {
 	}
 
 	addr := strings.TrimRight(cfg.Addr, "/")
-
 	// if single version
 	// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/master#how-to-import-time-series-data
 	importPath := addr + "/api/v1/import"
@@ -96,11 +110,15 @@ func NewImporter(cfg Config) (*Importer, error) {
 		return nil, fmt.Errorf("ping to %q failed: %s", addr, err)
 	}
 
+	if cfg.BatchSize < 1 {
+		cfg.BatchSize = 1e3
+	}
+
 	im.wg.Add(int(cfg.Concurrency))
 	for i := 0; i < int(cfg.Concurrency); i++ {
 		go func() {
 			defer im.wg.Done()
-			im.startWorker()
+			im.startWorker(cfg.BatchSize)
 		}()
 	}
 
@@ -133,12 +151,10 @@ func (im *Importer) Close() {
 	})
 }
 
-// TODO: make configurable
-const batchDataPoints = 5e4
-
-func (im *Importer) startWorker() {
+func (im *Importer) startWorker(batchSize int) {
 	var batch []*TimeSeries
 	var dataPoints int
+	waitForBatch := time.Now()
 	for {
 		select {
 		case <-im.close:
@@ -152,9 +168,13 @@ func (im *Importer) startWorker() {
 		case ts := <-im.input:
 			batch = append(batch, ts)
 			dataPoints += len(ts.Values)
-			if dataPoints < batchDataPoints {
+			if dataPoints < batchSize {
 				continue
 			}
+			im.s.Lock()
+			im.s.idleDuration += time.Since(waitForBatch)
+			im.s.Unlock()
+
 			if err := im.flush(batch); err != nil {
 				im.errors <- &ImportError{
 					Batch: batch,
@@ -165,6 +185,7 @@ func (im *Importer) startWorker() {
 			}
 			batch = batch[:0]
 			dataPoints = 0
+			waitForBatch = time.Now()
 		}
 	}
 }
@@ -206,6 +227,8 @@ func (im *Importer) Ping() error {
 }
 
 func (im *Importer) Import(tsBatch []*TimeSeries) error {
+	start := time.Now()
+
 	pr, pw := io.Pipe()
 	req, err := http.NewRequest("POST", im.importPath, pr)
 	if err != nil {
@@ -262,10 +285,14 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	}
 	wg.Wait()
 
-	atomic.AddUint64(&im.s.bytes, uint64(totalBytes))
-	atomic.AddUint64(&im.s.datapoints, uint64(totalDP))
-	atomic.AddUint64(&im.s.requests, 1)
-	return err
+	im.s.Lock()
+	im.s.bytes += uint64(totalBytes)
+	im.s.datapoints += uint64(totalDP)
+	im.s.requests++
+	im.s.importDuration += time.Since(start)
+	im.s.Unlock()
+
+	return nil
 }
 
 func byteCountSI(b int64) string {

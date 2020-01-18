@@ -5,8 +5,6 @@ import (
 	"io"
 )
 
-// TODO: add tests
-//{"metric":{"__name__":"measurement_field1","tag1":"value1"},"values":[123],"timestamps":[1577877162200]}
 type TimeSeries struct {
 	Name       string
 	LabelPairs []LabelPair
