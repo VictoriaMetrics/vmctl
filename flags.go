@@ -21,7 +21,7 @@ var (
 		&cli.IntFlag{
 			Name:  vmAccountID,
 			Value: -1,
-			Usage: "Account(tenant) ID - for the cluster VM only",
+			Usage: "Account(tenant) ID - is required for cluster VM.",
 		},
 		&cli.UintFlag{
 			Name:  vmConcurrency,
@@ -81,7 +81,7 @@ var (
 		},
 		&cli.StringFlag{
 			Name:  influxFilter,
-			Usage: "Influx filter expression to select timeseries. E.g. \"FROM cpu WHERE arch='x64'\"",
+			Usage: "Influx filter expression to select timeseries. E.g. \"arch='x64' AND host='host101'\"",
 		},
 		&cli.IntFlag{
 			Name:  influxChunkSize,

@@ -95,7 +95,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 	if cfg.AccountID != -1 {
 		// if cluster version
 		// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster#url-format
-		importPath = fmt.Sprintf("%s/insert/%d/api/v1/import", addr, uint32(cfg.AccountID))
+		importPath = fmt.Sprintf("%s/insert/%d/prometheus/api/v1/import", addr, uint32(cfg.AccountID))
 	}
 
 	im := &Importer{

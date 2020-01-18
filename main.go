@@ -23,7 +23,8 @@ func main() {
 
 	start := time.Now()
 	app := &cli.App{
-		Name:    "VictoriaMetrics migrate cli tool",
+		Name:    "vmctl",
+		Usage:   "Victoria metrics command-line tool",
 		Version: version,
 		Commands: []*cli.Command{
 			{
