@@ -94,7 +94,7 @@ func (c *Client) Explore() ([]*Series, error) {
 		return nil, fmt.Errorf("failed to get field keys: %s", err)
 	}
 
-	series, err := c.getSeries(c.filter)
+	series, err := c.getSeries()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get series: %s", err)
 	}
@@ -203,13 +203,13 @@ func getFilter(filter string, labelPairs []LabelPair) string {
 	for i, pair := range labelPairs {
 		fmt.Fprintf(f, "%s='%s'", pair.Name, pair.Value)
 		if i != len(labelPairs)-1 {
-			f.WriteString(" AND ")
+			f.WriteString(" and ")
 		}
 	}
 
 	if filter != "" {
 		if len(labelPairs) > 0 {
-			fmt.Fprintf(f, " AND %s", filter)
+			fmt.Fprintf(f, " and %s", filter)
 		} else {
 			f.WriteString(filter)
 		}
@@ -246,7 +246,7 @@ func (c *Client) getFieldKeys() ([]string, error) {
 	return result, nil
 }
 
-func (c *Client) getSeries(filter string) ([]string, error) {
+func (c *Client) getSeries() ([]string, error) {
 	f := getFilter(c.filter, nil)
 	com := fmt.Sprintf("show series %s", f)
 	q := influx.Query{
