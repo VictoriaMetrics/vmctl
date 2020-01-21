@@ -139,8 +139,8 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 		return nil, nil, err
 	}
 
-	if resp.Err != "" {
-		return nil, nil, fmt.Errorf("response error: %s", resp.Err)
+	if resp.Error() != nil {
+		return nil, nil, fmt.Errorf("response error: %s", resp.Error())
 	}
 
 	if len(resp.Results) != 1 {
@@ -272,8 +272,8 @@ func (c *Client) getSeries() ([]string, error) {
 			}
 			return nil, err
 		}
-		if resp.Err != "" {
-			return nil, fmt.Errorf("response error for query %q: %s", q.Command, resp.Err)
+		if resp.Error() != nil {
+			return nil, fmt.Errorf("response error for query %q: %s", q.Command, resp.Error())
 		}
 		values, err := parse(resp.Results[0])
 		if err != nil {
