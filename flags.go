@@ -4,6 +4,8 @@ import "github.com/urfave/cli/v2"
 
 const (
 	vmAddr        = "vm-addr"
+	vmUser        = "vm-user"
+	vmPassword    = "vm-password"
 	vmAccountID   = "vm-account-id"
 	vmConcurrency = "vm-concurrency"
 	vmCompress    = "vm-compress"
@@ -17,6 +19,16 @@ var (
 			Value: "http://localhost:8428",
 			Usage: "VictoriaMetrics address to perform import requests. " +
 				"Should be the same as --httpListenAddr value for single-node version or VMSelect component.",
+		},
+		&cli.StringFlag{
+			Name:    vmUser,
+			Usage:   "VictoriaMetrics username for basic auth",
+			EnvVars: []string{"VM_USERNAME"},
+		},
+		&cli.StringFlag{
+			Name:    vmPassword,
+			Usage:   "VictoriaMetrics password for basic auth",
+			EnvVars: []string{"VM_PASSWORD"},
 		},
 		&cli.IntFlag{
 			Name:  vmAccountID,

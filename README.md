@@ -36,7 +36,9 @@ OPTIONS:
    --influx-chunk-size value        The chunkSize defines max amount of series to be returned in one chunk (default: 10000)
    --influx-concurrency value       Number of concurrently running fetch queries to InfluxDB (default: 1)
    --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
-   --vm-account-id value            Account(tenant) ID - for the cluster VM only (default: -1)
+   --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
+   --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
+   --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
    --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                    Whether to apply gzip compression to import requests (default: true)
    --vm-batch-size value            How many datapoints importer collects before sending the import request to VM (default: 200000)

@@ -31,6 +31,10 @@ type Config struct {
 	// BatchSize defines how many datapoints
 	// importer collects before sending the import request
 	BatchSize int
+	// User name for basic auth
+	User string
+	// Password for basic auth
+	Password string
 }
 
 // Importer performs insertion of timeseries
@@ -41,6 +45,8 @@ type Importer struct {
 	importPath string
 	compress   bool
 	batchSize  int
+	user       string
+	password   string
 
 	close  chan struct{}
 	input  chan *TimeSeries
@@ -102,6 +108,8 @@ func NewImporter(cfg Config) (*Importer, error) {
 		addr:       addr,
 		importPath: importPath,
 		compress:   cfg.Compress,
+		user:       cfg.User,
+		password:   cfg.Password,
 		close:      make(chan struct{}),
 		input:      make(chan *TimeSeries, cfg.Concurrency*4),
 		errors:     make(chan *ImportError),
@@ -233,6 +241,9 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	req, err := http.NewRequest("POST", im.importPath, pr)
 	if err != nil {
 		return fmt.Errorf("cannot create request to %q: %s", im.addr, err)
+	}
+	if im.user != "" {
+		req.SetBasicAuth(im.user, im.password)
 	}
 	if im.compress {
 		req.Header.Set("Content-Encoding", "gzip")

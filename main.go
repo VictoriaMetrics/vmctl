@@ -50,6 +50,8 @@ func main() {
 
 					vmCfg := vm.Config{
 						Addr:        c.String(vmAddr),
+						User:        c.String(vmUser),
+						Password:    c.String(vmPassword),
 						Concurrency: uint8(c.Int(vmConcurrency)),
 						Compress:    c.Bool(vmCompress),
 						AccountID:   c.Int(vmAccountID),
