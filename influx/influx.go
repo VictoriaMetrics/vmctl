@@ -178,7 +178,7 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 // datapoints for particular field.
 func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
 	filter := getFilter(c.filter, s.LabelPairs)
-	q := fmt.Sprintf("select %s from %s %s", s.Field, s.Measurement, filter)
+	q := fmt.Sprintf("select %q from %q %s", s.Field, s.Measurement, filter)
 	iq := influx.Query{
 		Command:         q,
 		Database:        c.database,
