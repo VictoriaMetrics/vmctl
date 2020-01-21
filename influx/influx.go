@@ -138,18 +138,18 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
 	if resp.Error() != nil {
 		return nil, nil, fmt.Errorf("response error: %s", resp.Error())
 	}
-
 	if len(resp.Results) != 1 {
 		return nil, nil, fmt.Errorf("unexpected number of results in response: %d", len(resp.Results))
 	}
-
 	results, err := parse(resp.Results[0])
 	if err != nil {
 		return nil, nil, err
+	}
+	if len(results) < 1 {
+		return nil, nil, nil
 	}
 
 	const timeFiled = "time"

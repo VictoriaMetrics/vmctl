@@ -108,6 +108,10 @@ func (ip *influxProcessor) do(s *influx.Series) error {
 			}
 			return err
 		}
+		// skip empty results
+		if len(time) < 1 {
+			continue
+		}
 		ip.im.Input() <- &vm.TimeSeries{
 			Name:       name,
 			LabelPairs: labels,
