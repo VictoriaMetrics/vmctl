@@ -53,7 +53,7 @@ func (ip *influxProcessor) run() error {
 			defer wg.Done()
 			for s := range seriesCh {
 				if err := ip.do(s); err != nil {
-					errCh <- err
+					errCh <- fmt.Errorf("request failed for %q.%q: %s", s.Measurement, s.Field, err)
 					return
 				}
 				bar.Increment()
