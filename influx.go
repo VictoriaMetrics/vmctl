@@ -72,7 +72,7 @@ func (ip *influxProcessor) run() error {
 				errTS += fmt.Sprintf("%s for timestamps range %d - %d\n",
 					ts.String(), ts.Timestamps[0], ts.Timestamps[len(ts.Timestamps)-1])
 			}
-			return fmt.Errorf("Import process failed for \n%sWith error: %s", errTS, vmErr.Err)
+			return fmt.Errorf("Import process failed for: \n%swith error: %s", errTS, vmErr.Err)
 		case seriesCh <- s:
 		}
 	}

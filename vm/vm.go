@@ -3,9 +3,10 @@ package vm
 import (
 	"bufio"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
-	"log"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
@@ -67,6 +68,7 @@ type stats struct {
 	datapoints     uint64
 	bytes          uint64
 	requests       uint64
+	retries        uint64
 	startTime      time.Time
 	importDuration time.Duration
 	idleDuration   time.Duration
@@ -82,11 +84,12 @@ func (s *stats) String() string {
 		"  datapoints/s: %.2f;\n"+
 		"  total bytes: %s;\n"+
 		"  bytes/s: %s;\n"+
-		"  import requests: %d;",
+		"  import requests: %d;\n"+
+		"  import requests retries: %d;",
 		s.idleDuration, s.importDuration,
 		s.datapoints, float64(s.datapoints)/s.importDuration.Seconds(),
 		byteCountSI(int64(s.bytes)), byteCountSI(int64(float64(s.bytes)/s.importDuration.Seconds())),
-		s.requests)
+		s.requests, s.retries)
 }
 
 func NewImporter(cfg Config) (*Importer, error) {
@@ -201,7 +204,7 @@ func (im *Importer) startWorker(batchSize int) {
 const (
 	// TODO: make configurable
 	backoffRetries     = 5
-	backoffFactor      = 1.5
+	backoffFactor      = 1.7
 	backoffMinDuration = time.Second
 )
 
@@ -212,6 +215,12 @@ func (im *Importer) flush(b []*TimeSeries) error {
 		if err == nil {
 			return nil
 		}
+		if errors.Is(err, ErrBadRequest) {
+			return err // fail fast if not recoverable
+		}
+		im.s.Lock()
+		im.s.retries++
+		im.s.Unlock()
 		backoff := float64(backoffMinDuration) * math.Pow(backoffFactor, float64(i))
 		time.Sleep(time.Duration(backoff))
 	}
@@ -249,18 +258,10 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	errCh := make(chan error)
 	go func() {
-		defer wg.Done()
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Printf("unexpected error when performing request to %q: %s", im.addr, err)
-			return
-		}
-		if resp.StatusCode != http.StatusNoContent {
-			log.Printf("unexpected response code from %q: %d", im.addr, resp.StatusCode)
-		}
+		errCh <- do(req)
+		close(errCh)
 	}()
 
 	w := io.Writer(pw)
@@ -277,7 +278,7 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	for _, ts := range tsBatch {
 		n, err := ts.write(bw)
 		if err != nil {
-			return fmt.Errorf("write err: %s", err)
+			return fmt.Errorf("write err: %w", err)
 		}
 		totalBytes += n
 		totalDP += len(ts.Values)
@@ -294,7 +295,11 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	if err := pw.Close(); err != nil {
 		return err
 	}
-	wg.Wait()
+
+	requestErr := <-errCh
+	if requestErr != nil {
+		return fmt.Errorf("import request error for %q: %w", im.addr, requestErr)
+	}
 
 	im.s.Lock()
 	im.s.bytes += uint64(totalBytes)
@@ -303,6 +308,26 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	im.s.importDuration += time.Since(start)
 	im.s.Unlock()
 
+	return nil
+}
+
+var ErrBadRequest = errors.New("bad request")
+
+func do(req *http.Request) error {
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected error when performing request: %s", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body for status code %d: %s", resp.StatusCode, err)
+		}
+		if resp.StatusCode == http.StatusBadRequest {
+			return fmt.Errorf("%w: unexpected response code %d: %s", ErrBadRequest, resp.StatusCode, string(body))
+		}
+		return fmt.Errorf("unexpected response code %d: %s", resp.StatusCode, string(body))
+	}
 	return nil
 }
 
