@@ -233,6 +233,9 @@ func (im *Importer) Ping() error {
 	if err != nil {
 		return fmt.Errorf("cannot create request to %q: %s", im.addr, err)
 	}
+	if im.user != "" {
+		req.SetBasicAuth(im.user, im.password)
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
