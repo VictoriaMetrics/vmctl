@@ -128,6 +128,7 @@ func (c *Client) Explore() ([]*Series, error) {
 // over huge time series.
 type ChunkedResponse struct {
 	cr    *influx.ChunkedResponse
+	iq    influx.Query
 	field string
 }
 
@@ -139,7 +140,7 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 		return nil, nil, err
 	}
 	if resp.Error() != nil {
-		return nil, nil, fmt.Errorf("response error: %s", resp.Error())
+		return nil, nil, fmt.Errorf("response error for %q: %s", cr.iq.Command, resp.Error())
 	}
 	if len(resp.Results) != 1 {
 		return nil, nil, fmt.Errorf("unexpected number of results in response: %d", len(resp.Results))
@@ -190,7 +191,7 @@ func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query %q err: %s", iq.Command, err)
 	}
-	return &ChunkedResponse{cr, s.Field}, nil
+	return &ChunkedResponse{cr, iq, s.Field}, nil
 }
 
 func getFilter(filter string, labelPairs []LabelPair) string {
@@ -201,7 +202,7 @@ func getFilter(filter string, labelPairs []LabelPair) string {
 	f := &strings.Builder{}
 	f.WriteString("where ")
 	for i, pair := range labelPairs {
-		fmt.Fprintf(f, "%s='%s'", pair.Name, pair.Value)
+		fmt.Fprintf(f, "%q=%q", pair.Name, pair.Value)
 		if i != len(labelPairs)-1 {
 			f.WriteString(" and ")
 		}
