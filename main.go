@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,10 +16,6 @@ import (
 const version = "0.0.1"
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-
 	start := time.Now()
 	app := &cli.App{
 		Name:    "vmctl",
@@ -40,7 +35,11 @@ func main() {
 						Password:  c.String(influxPassword),
 						Database:  c.String(influxDB),
 						Retention: c.String(influxRetention),
-						Filter:    c.String(influxFilter),
+						Filter: influx.Filter{
+							Series:    c.String(influxFilterSeries),
+							TimeStart: c.String(influxFilterTimeStart),
+							TimeEnd:   c.String(influxFilterTimeEnd),
+						},
 						ChunkSize: c.Int(influxChunkSize),
 					}
 					influxClient, err := influx.NewClient(iCfg)

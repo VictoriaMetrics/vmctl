@@ -16,9 +16,11 @@ type Client struct {
 	influx.Client
 
 	database  string
-	filter    string
 	retention string
 	chunkSize int
+
+	filterSeries string
+	filterTime   string
 }
 
 // Config contains fields required
@@ -29,8 +31,15 @@ type Config struct {
 	Password  string
 	Database  string
 	Retention string
-	Filter    string
 	ChunkSize int
+
+	Filter Filter
+}
+
+type Filter struct {
+	Series    string
+	TimeStart string
+	TimeEnd   string
 }
 
 // Series holds the time series
@@ -38,6 +47,27 @@ type Series struct {
 	Measurement string
 	Field       string
 	LabelPairs  []LabelPair
+}
+
+func (s Series) fetchQuery(timeFilter string) string {
+	f := &strings.Builder{}
+	fmt.Fprintf(f, "select %q from %q", s.Field, s.Measurement)
+	if len(s.LabelPairs) > 0 || len(timeFilter) > 0 {
+		f.WriteString(" where")
+	}
+	for i, pair := range s.LabelPairs {
+		fmt.Fprintf(f, " %q='%s'", pair.Name, pair.Value)
+		if i != len(s.LabelPairs)-1 {
+			f.WriteString(" and")
+		}
+	}
+	if len(timeFilter) > 0 {
+		if len(s.LabelPairs) > 0 {
+			f.WriteString(" and")
+		}
+		fmt.Fprintf(f, " %s", timeFilter)
+	}
+	return f.String()
 }
 
 // LabelPair is the key-value record
@@ -68,14 +98,33 @@ func NewClient(cfg Config) (*Client, error) {
 	if chunkSize < 1 {
 		chunkSize = 10e3
 	}
+
 	client := &Client{
-		Client:    hc,
-		database:  cfg.Database,
-		retention: cfg.Retention,
-		filter:    cfg.Filter,
-		chunkSize: chunkSize,
+		Client:       hc,
+		database:     cfg.Database,
+		retention:    cfg.Retention,
+		chunkSize:    chunkSize,
+		filterTime:   timeFilter(cfg.Filter.TimeStart, cfg.Filter.TimeEnd),
+		filterSeries: cfg.Filter.Series,
 	}
 	return client, nil
+}
+
+func timeFilter(start, end string) string {
+	if start == "" && end == "" {
+		return ""
+	}
+	var tf string
+	if start != "" {
+		tf = fmt.Sprintf("time >= '%s'", start)
+	}
+	if end != "" {
+		if tf != "" {
+			tf += " and "
+		}
+		tf += fmt.Sprintf("time <= '%s'", end)
+	}
+	return tf
 }
 
 // Explore checks the existing data schema in influx
@@ -89,7 +138,7 @@ func NewClient(cfg Config) (*Client, error) {
 // May contain non-existing time series.
 func (c *Client) Explore() ([]*Series, error) {
 	log.Printf("Exploring scheme for database %q", c.database)
-	fieldKeys, err := c.getFieldKeys()
+	mFields, err := c.fieldsByMeasurement()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get field keys: %s", err)
 	}
@@ -111,7 +160,11 @@ func (c *Client) Explore() ([]*Series, error) {
 				Value: pairParts[1],
 			})
 		}
-		for _, field := range fieldKeys {
+		fields, ok := mFields[measurement]
+		if !ok {
+			return nil, fmt.Errorf("can't find field keys for measurement %q", measurement)
+		}
+		for _, field := range fields {
 			is := &Series{
 				Measurement: measurement,
 				Field:       field,
@@ -145,26 +198,27 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 	if len(resp.Results) != 1 {
 		return nil, nil, fmt.Errorf("unexpected number of results in response: %d", len(resp.Results))
 	}
-	results, err := parse(resp.Results[0])
+	results, err := parseResult(resp.Results[0])
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(results) < 1 {
 		return nil, nil, nil
 	}
+	r := results[0]
 
-	const timeFiled = "time"
-	timestamps, ok := results[timeFiled]
+	const key = "time"
+	timestamps, ok := r.values[key]
 	if !ok {
-		return nil, nil, fmt.Errorf("response doesn't contain field %q", timeFiled)
+		return nil, nil, fmt.Errorf("response doesn't contain field %q", key)
 	}
 
-	values, ok := results[cr.field]
+	values, ok := r.values[cr.field]
 	if !ok {
 		return nil, nil, fmt.Errorf("response doesn't contain filed %q", cr.field)
 	}
 
-	ts := make([]int64, len(results["time"]))
+	ts := make([]int64, len(results[0].values[key]))
 	for i, v := range timestamps {
 		t, err := parseDate(v.(string))
 		if err != nil {
@@ -178,10 +232,8 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 // FetchDataPoints performs SELECT request to fetch
 // datapoints for particular field.
 func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
-	filter := getFilter(c.filter, s.LabelPairs)
-	q := fmt.Sprintf("select %q from %q %s", s.Field, s.Measurement, filter)
 	iq := influx.Query{
-		Command:         q,
+		Command:         s.fetchQuery(c.filterTime),
 		Database:        c.database,
 		RetentionPolicy: c.retention,
 		Chunked:         true,
@@ -194,62 +246,40 @@ func (c *Client) FetchDataPoints(s *Series) (*ChunkedResponse, error) {
 	return &ChunkedResponse{cr, iq, s.Field}, nil
 }
 
-func getFilter(filter string, labelPairs []LabelPair) string {
-	if filter == "" && len(labelPairs) == 0 {
-		return ""
-	}
-
-	f := &strings.Builder{}
-	f.WriteString("where ")
-	for i, pair := range labelPairs {
-		fmt.Fprintf(f, "%q=%q", pair.Name, pair.Value)
-		if i != len(labelPairs)-1 {
-			f.WriteString(" and ")
-		}
-	}
-
-	if filter != "" {
-		if len(labelPairs) > 0 {
-			fmt.Fprintf(f, " and %s", filter)
-		} else {
-			f.WriteString(filter)
-		}
-	}
-
-	return f.String()
-}
-
-func parseDate(dateStr string) (int64, error) {
-	startTime, err := time.Parse(time.RFC3339, dateStr)
-	if err != nil {
-		return 0, fmt.Errorf("cannot parse %q: %s", dateStr, err)
-	}
-	return startTime.UnixNano() / 1e6, nil
-}
-
-func (c *Client) getFieldKeys() ([]string, error) {
+func (c *Client) fieldsByMeasurement() (map[string][]string, error) {
 	q := influx.Query{
 		Command:         "show field keys",
 		Database:        c.database,
 		RetentionPolicy: c.retention,
 	}
 	log.Printf("fetching fields: %s", stringify(q))
-	values, err := c.do(q)
+	qValues, err := c.do(q)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query %q: %s", q.Command, err)
 	}
 
-	result := make([]string, len(values["fieldKey"]))
-	for i, v := range values["fieldKey"] {
-		result[i] = v.(string)
+	var total int
+	const key = "fieldKey"
+	result := make(map[string][]string, len(qValues))
+	for _, qv := range qValues {
+		fields := qv.values[key]
+		values := make([]string, len(fields))
+		for key, field := range fields {
+			values[key] = field.(string)
+			total++
+		}
+		result[qv.name] = values
 	}
-	log.Printf("found %d fields", len(result))
+
+	log.Printf("found %d fields", total)
 	return result, nil
 }
 
 func (c *Client) getSeries() ([]string, error) {
-	f := getFilter(c.filter, nil)
-	com := fmt.Sprintf("show series %s", f)
+	com := "show series"
+	if c.filterSeries != "" {
+		com = fmt.Sprintf("%s %s", com, c.filterSeries)
+	}
 	q := influx.Query{
 		Command:         com,
 		Database:        c.database,
@@ -264,6 +294,7 @@ func (c *Client) getSeries() ([]string, error) {
 		return nil, fmt.Errorf("error while executing query %q: %s", q.Command, err)
 	}
 
+	const key = "key"
 	var result []string
 	for {
 		resp, err := cr.NextResponse()
@@ -276,19 +307,22 @@ func (c *Client) getSeries() ([]string, error) {
 		if resp.Error() != nil {
 			return nil, fmt.Errorf("response error for query %q: %s", q.Command, resp.Error())
 		}
-		values, err := parse(resp.Results[0])
+		qValues, err := parseResult(resp.Results[0])
 		if err != nil {
 			return nil, err
 		}
-		for _, v := range values["key"] {
-			result = append(result, v.(string))
+		for _, qv := range qValues {
+			for _, v := range qv.values[key] {
+				result = append(result, v.(string))
+
+			}
 		}
 	}
 
 	return result, nil
 }
 
-func (c *Client) do(q influx.Query) (map[string][]interface{}, error) {
+func (c *Client) do(q influx.Query) ([]queryValues, error) {
 	res, err := c.Query(q)
 	if err != nil {
 		return nil, fmt.Errorf("query %q err: %s", q.Command, err)
@@ -296,30 +330,5 @@ func (c *Client) do(q influx.Query) (map[string][]interface{}, error) {
 	if len(res.Results) < 1 {
 		return nil, fmt.Errorf("exploration query %q returned 0 results", q.Command)
 	}
-	return parse(res.Results[0])
-}
-
-func parse(res influx.Result) (map[string][]interface{}, error) {
-	if len(res.Err) > 0 {
-		return nil, fmt.Errorf("result error: %s", res.Err)
-	}
-	values := make(map[string][]interface{})
-	for _, row := range res.Series {
-		cols := make(map[int]string)
-		for pos, key := range row.Columns {
-			cols[pos] = key
-		}
-		for _, value := range row.Values {
-			for idx, v := range value {
-				key := cols[idx]
-				values[key] = append(values[key], v)
-			}
-		}
-	}
-	return values, nil
-}
-
-func stringify(q influx.Query) string {
-	return fmt.Sprintf("command: %q; database: %q; retention: %q",
-		q.Command, q.Database, q.RetentionPolicy)
+	return parseResult(res.Results[0])
 }

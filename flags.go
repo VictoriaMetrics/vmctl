@@ -54,14 +54,16 @@ var (
 )
 
 const (
-	influxAddr        = "influx-addr"
-	influxUser        = "influx-user"
-	influxPassword    = "influx-password"
-	influxDB          = "influx-database"
-	influxRetention   = "influx-retention-policy"
-	influxFilter      = "influx-series-filter"
-	influxChunkSize   = "influx-chunk-size"
-	influxConcurrency = "influx-concurrency"
+	influxAddr            = "influx-addr"
+	influxUser            = "influx-user"
+	influxPassword        = "influx-password"
+	influxDB              = "influx-database"
+	influxRetention       = "influx-retention-policy"
+	influxChunkSize       = "influx-chunk-size"
+	influxConcurrency     = "influx-concurrency"
+	influxFilterSeries    = "influx-filter-series"
+	influxFilterTimeStart = "influx-filter-time-start"
+	influxFilterTimeEnd   = "influx-filter-time-end"
 )
 
 var (
@@ -91,10 +93,6 @@ var (
 			Usage: "Influx retention policy",
 			Value: "autogen",
 		},
-		&cli.StringFlag{
-			Name:  influxFilter,
-			Usage: "Influx filter expression to select timeseries. E.g. \"arch='x64' AND host='host101'\"",
-		},
 		&cli.IntFlag{
 			Name:  influxChunkSize,
 			Usage: "The chunkSize defines max amount of series to be returned in one chunk",
@@ -104,6 +102,19 @@ var (
 			Name:  influxConcurrency,
 			Usage: "Number of concurrently running fetch queries to InfluxDB",
 			Value: 1,
+		},
+		&cli.StringFlag{
+			Name: influxFilterSeries,
+			Usage: "Influx filter expression to select series. E.g. \"from cpu where arch='x86' AND hostname='host_2753'\".\n" +
+				"See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#show-series",
+		},
+		&cli.StringFlag{
+			Name:  influxFilterTimeStart,
+			Usage: "The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name:  influxFilterTimeEnd,
+			Usage: "The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'",
 		},
 	}
 )

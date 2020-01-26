@@ -32,17 +32,20 @@ OPTIONS:
    --influx-password value          Influx user password [$INFLUX_PASSWORD]
    --influx-database value          Influx database
    --influx-retention-policy value  Influx retention policy (default: "autogen")
-   --influx-series-filter value     Influx filter expression to select timeseries. E.g. "arch='x64' AND host='host101'"
    --influx-chunk-size value        The chunkSize defines max amount of series to be returned in one chunk (default: 10000)
    --influx-concurrency value       Number of concurrently running fetch queries to InfluxDB (default: 1)
-   --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
-   --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
-   --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
-   --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
-   --vm-compress                    Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value            How many datapoints importer collects before sending the import request to VM (default: 200000)
-   --help, -h                       show help (default: false)
+   --influx-filter-series value     Influx filter expression to select series. E.g. "from cpu where arch='x86' AND hostname='host_2753'".
+See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#show-series
+   --influx-filter-time-start value  The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
+   --influx-filter-time-end value    The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
+   --vm-addr value                   VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
+   --vm-user value                   VictoriaMetrics username for basic auth [$VM_USERNAME]
+   --vm-password value               VictoriaMetrics password for basic auth [$VM_PASSWORD]
+   --vm-account-id value             Account(tenant) ID - is required for cluster VM. (default: -1)
+   --vm-concurrency value            Number of workers concurrently performing import requests to VM (default: 2)
+   --vm-compress                     Whether to apply gzip compression to import requests (default: true)
+   --vm-batch-size value             How many datapoints importer collects before sending the import request to VM (default: 200000)
+   --help, -h                        show help (default: false)
 ```
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
@@ -84,17 +87,30 @@ The configuration flags should contain self-explanatory descriptions.
 
 #### Filtering
 
-In order to export only part of timeseries from InfluxDB please specify the `--influx-series-filter` flag.
-It's value will be added to InfluxDB queries then:
+The filtering consists of two parts: timeseries and time.
+The first step of application is to select all available timeseries
+for given database and retention. User may specify additional filtering
+condition via `--influx-filter-series` flag. For example:
 ```
-./vmctl influx --influx-database benchmark --influx-series-filter "arch='x64' and datacenter='ap-northeast-1a' and time >= '2020-01-01T20:07:00Z' and time < '2020-01-01T21:07:00Z'"
+./vmctl influx --influx-database benchmark --influx-filter-series "on benchmark from cpu where hostname='host_1703'"
 InfluxDB import mode
-2020/01/18 22:36:41 Exploring scheme for database "benchmark"
-2020/01/18 22:36:41 fetching fields: command: "show field keys"; database: "benchmark"; retention: "autogen"
-2020/01/18 22:36:41 found 10 fields
-2020/01/18 22:36:41 fetching series: command: "show series where arch='x64' and datacenter='ap-northeast-1a' and time >= '2020-01-01T20:07:00Z' and time < '2020-01-01T21:07:00Z' "; database: "benchmark"; retention: "autogen"
-Found 1350 timeseries to import. Continue? [Y/n] y
+2020/01/26 14:23:29 Exploring scheme for database "benchmark"
+2020/01/26 14:23:29 fetching fields: command: "show field keys"; database: "benchmark"; retention: "autogen"
+2020/01/26 14:23:29 found 12 fields
+2020/01/26 14:23:29 fetching series: command: "show series on benchmark from cpu where hostname='host_1703'"; database: "benchmark"; retention: "autogen"
+Found 10 timeseries to import. Continue? [Y/n] 
 ```
+The timeseries select query would be following:
+ `fetching series: command: "show series on benchmark from cpu where hostname='host_1703'"; database: "benchmark"; retention: "autogen"`
+ 
+The second step of filtering is a time filter and it applies when fetching the datapoints from Influx.
+Time filtering may be configured with two flags:
+* --influx-filter-time-start 
+* --influx-filter-time-end 
+Here's an example of importing timeseries for one day only:
+`./vmctl influx --influx-database benchmark --influx-filter-series "where hostname='host_1703'" --influx-filter-time-start "2020-01-01T10:07:00Z" --influx-filter-time-end "2020-01-01T15:07:00Z"`
+
+Please see more about time filtering [here](https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#filter-meta-queries-by-time).
 
 #### Performance
 
