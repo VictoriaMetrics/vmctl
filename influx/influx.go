@@ -253,19 +253,30 @@ func (c *Client) fieldsByMeasurement() (map[string][]string, error) {
 	}
 
 	var total int
-	const key = "fieldKey"
+	var skipped int
+	const fKey = "fieldKey"
+	const fType = "fieldType"
 	result := make(map[string][]string, len(qValues))
 	for _, qv := range qValues {
-		fields := qv.values[key]
+		types := qv.values[fType]
+		fields := qv.values[fKey]
 		values := make([]string, len(fields))
 		for key, field := range fields {
+			if types[key].(string) == "string" {
+				skipped++
+				continue
+			}
 			values[key] = field.(string)
 			total++
 		}
 		result[qv.name] = values
 	}
 
-	log.Printf("found %d fields", total)
+	if skipped > 0 {
+		log.Printf("found %d fields; skipped %d non-numeric fields", total, skipped)
+	} else {
+		log.Printf("found %d fields", total)
+	}
 	return result, nil
 }
 
