@@ -54,16 +54,17 @@ var (
 )
 
 const (
-	influxAddr            = "influx-addr"
-	influxUser            = "influx-user"
-	influxPassword        = "influx-password"
-	influxDB              = "influx-database"
-	influxRetention       = "influx-retention-policy"
-	influxChunkSize       = "influx-chunk-size"
-	influxConcurrency     = "influx-concurrency"
-	influxFilterSeries    = "influx-filter-series"
-	influxFilterTimeStart = "influx-filter-time-start"
-	influxFilterTimeEnd   = "influx-filter-time-end"
+	influxAddr                      = "influx-addr"
+	influxUser                      = "influx-user"
+	influxPassword                  = "influx-password"
+	influxDB                        = "influx-database"
+	influxRetention                 = "influx-retention-policy"
+	influxChunkSize                 = "influx-chunk-size"
+	influxConcurrency               = "influx-concurrency"
+	influxFilterSeries              = "influx-filter-series"
+	influxFilterTimeStart           = "influx-filter-time-start"
+	influxFilterTimeEnd             = "influx-filter-time-end"
+	influxMeasurementFieldSeparator = "influx-measurement-field-separator"
 )
 
 var (
@@ -115,6 +116,10 @@ var (
 		&cli.StringFlag{
 			Name:  influxFilterTimeEnd,
 			Usage: "The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name:  influxMeasurementFieldSeparator,
+			Usage: "The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}.",
 		},
 	}
 )

@@ -12,19 +12,21 @@ import (
 )
 
 type influxProcessor struct {
-	ic *influx.Client
-	im *vm.Importer
-	cc int
+	ic        *influx.Client
+	im        *vm.Importer
+	cc        int
+	separator string
 }
 
-func newInfluxProcessor(ic *influx.Client, im *vm.Importer, cc int) *influxProcessor {
+func newInfluxProcessor(ic *influx.Client, im *vm.Importer, cc int, separator string) *influxProcessor {
 	if cc < 1 {
 		cc = 1
 	}
 	return &influxProcessor{
-		ic: ic,
-		im: im,
-		cc: cc,
+		ic:        ic,
+		im:        im,
+		cc:        cc,
+		separator: separator,
 	}
 }
 
@@ -94,7 +96,7 @@ func (ip *influxProcessor) do(s *influx.Series) error {
 	defer cr.Close()
 	var name string
 	if s.Measurement != "" {
-		name = fmt.Sprintf("%s_%s", s.Measurement, s.Field)
+		name = fmt.Sprintf("%s%s%s", s.Measurement, ip.separator, s.Field)
 	} else {
 		name = s.Field
 	}
