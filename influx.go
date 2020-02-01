@@ -91,7 +91,13 @@ func (ip *influxProcessor) do(s *influx.Series) error {
 	if err != nil {
 		return fmt.Errorf("failed to fetch datapoints: %s", err)
 	}
-	name := fmt.Sprintf("%s_%s", s.Measurement, s.Field)
+	defer cr.Close()
+	var name string
+	if s.Measurement != "" {
+		name = fmt.Sprintf("%s_%s", s.Measurement, s.Field)
+	} else {
+		name = s.Field
+	}
 	labels := make([]vm.LabelPair, len(s.LabelPairs))
 	for i, lp := range s.LabelPairs {
 		labels[i] = vm.LabelPair{

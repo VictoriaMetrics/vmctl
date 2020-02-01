@@ -150,25 +150,15 @@ func (c *Client) Explore() ([]*Series, error) {
 
 	var iSeries []*Series
 	for _, s := range series {
-		labelParts := strings.Split(s, ",")
-		measurement := labelParts[0]
-		var lp []LabelPair
-		for _, pair := range labelParts[1:] {
-			pairParts := strings.Split(pair, "=")
-			lp = append(lp, LabelPair{
-				Name:  pairParts[0],
-				Value: pairParts[1],
-			})
-		}
-		fields, ok := mFields[measurement]
+		fields, ok := mFields[s.Measurement]
 		if !ok {
-			return nil, fmt.Errorf("can't find field keys for measurement %q", measurement)
+			return nil, fmt.Errorf("can't find field keys for measurement %q", s.Measurement)
 		}
 		for _, field := range fields {
 			is := &Series{
-				Measurement: measurement,
+				Measurement: s.Measurement,
 				Field:       field,
-				LabelPairs:  lp,
+				LabelPairs:  s.LabelPairs,
 			}
 			iSeries = append(iSeries, is)
 		}
@@ -185,6 +175,10 @@ type ChunkedResponse struct {
 	field string
 }
 
+func (cr *ChunkedResponse) Close() error {
+	return cr.cr.Close()
+}
+
 // Next reads the next part/chunk of time series.
 // Returns io.EOF when time series was read entirely.
 func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
@@ -193,7 +187,7 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 		return nil, nil, err
 	}
 	if resp.Error() != nil {
-		return nil, nil, fmt.Errorf("response error for %q: %s", cr.iq.Command, resp.Error())
+		return nil, nil, fmt.Errorf("response error for %s: %s", cr.iq.Command, resp.Error())
 	}
 	if len(resp.Results) != 1 {
 		return nil, nil, fmt.Errorf("unexpected number of results in response: %d", len(resp.Results))
@@ -275,7 +269,7 @@ func (c *Client) fieldsByMeasurement() (map[string][]string, error) {
 	return result, nil
 }
 
-func (c *Client) getSeries() ([]string, error) {
+func (c *Client) getSeries() ([]*Series, error) {
 	com := "show series"
 	if c.filterSeries != "" {
 		com = fmt.Sprintf("%s %s", com, c.filterSeries)
@@ -295,7 +289,7 @@ func (c *Client) getSeries() ([]string, error) {
 	}
 
 	const key = "key"
-	var result []string
+	var result []*Series
 	for {
 		resp, err := cr.NextResponse()
 		if err != nil {
@@ -313,8 +307,11 @@ func (c *Client) getSeries() ([]string, error) {
 		}
 		for _, qv := range qValues {
 			for _, v := range qv.values[key] {
-				result = append(result, v.(string))
-
+				s := &Series{}
+				if err := s.unmarshal(v.(string)); err != nil {
+					return nil, err
+				}
+				result = append(result, s)
 			}
 		}
 	}
