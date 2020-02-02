@@ -110,6 +110,10 @@ func NewClient(cfg Config) (*Client, error) {
 	return client, nil
 }
 
+func (c Client) Database() string {
+	return c.database
+}
+
 func timeFilter(start, end string) string {
 	if start == "" && end == "" {
 		return ""
@@ -260,13 +264,13 @@ func (c *Client) fieldsByMeasurement() (map[string][]string, error) {
 	for _, qv := range qValues {
 		types := qv.values[fType]
 		fields := qv.values[fKey]
-		values := make([]string, len(fields))
+		values := make([]string, 0)
 		for key, field := range fields {
 			if types[key].(string) == "string" {
 				skipped++
 				continue
 			}
-			values[key] = field.(string)
+			values = append(values, field.(string))
 			total++
 		}
 		result[qv.name] = values
@@ -326,7 +330,7 @@ func (c *Client) getSeries() ([]*Series, error) {
 			}
 		}
 	}
-
+	log.Printf("found %d series", len(result))
 	return result, nil
 }
 

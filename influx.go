@@ -88,6 +88,8 @@ func (ip *influxProcessor) run() error {
 	return nil
 }
 
+const dbLabel = "db"
+
 func (ip *influxProcessor) do(s *influx.Series) error {
 	cr, err := ip.ic.FetchDataPoints(s)
 	if err != nil {
@@ -100,12 +102,24 @@ func (ip *influxProcessor) do(s *influx.Series) error {
 	} else {
 		name = s.Field
 	}
+
 	labels := make([]vm.LabelPair, len(s.LabelPairs))
+	var containsDBLabel bool
 	for i, lp := range s.LabelPairs {
+		if lp.Name == dbLabel {
+			containsDBLabel = true
+			break
+		}
 		labels[i] = vm.LabelPair{
 			Name:  lp.Name,
 			Value: lp.Value,
 		}
+	}
+	if !containsDBLabel {
+		labels = append(labels, vm.LabelPair{
+			Name:  dbLabel,
+			Value: ip.ic.Database(),
+		})
 	}
 
 	for {
