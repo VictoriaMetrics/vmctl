@@ -36,16 +36,17 @@ OPTIONS:
    --influx-concurrency value       Number of concurrently running fetch queries to InfluxDB (default: 1)
    --influx-filter-series value     Influx filter expression to select series. E.g. "from cpu where arch='x86' AND hostname='host_2753'".
 See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#show-series
-   --influx-filter-time-start value  The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
-   --influx-filter-time-end value    The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
-   --vm-addr value                   VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
-   --vm-user value                   VictoriaMetrics username for basic auth [$VM_USERNAME]
-   --vm-password value               VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value             Account(tenant) ID - is required for cluster VM. (default: -1)
-   --vm-concurrency value            Number of workers concurrently performing import requests to VM (default: 2)
-   --vm-compress                     Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value             How many datapoints importer collects before sending the import request to VM (default: 200000)
-   --help, -h                        show help (default: false)
+   --influx-filter-time-start value            The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
+   --influx-filter-time-end value              The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
+   --influx-measurement-field-separator value  The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}. (default: "_")
+   --vm-addr value                             VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
+   --vm-user value                             VictoriaMetrics username for basic auth [$VM_USERNAME]
+   --vm-password value                         VictoriaMetrics password for basic auth [$VM_PASSWORD]
+   --vm-account-id value                       Account(tenant) ID - is required for cluster VM. (default: -1)
+   --vm-concurrency value                      Number of workers concurrently performing import requests to VM (default: 2)
+   --vm-compress                               Whether to apply gzip compression to import requests (default: true)
+   --vm-batch-size value                       How many datapoints importer collects before sending the import request to VM (default: 200000)
+   --help, -h                                  show help (default: false)
 ```
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
@@ -80,6 +81,28 @@ Found 40000 timeseries to import. Continue? [Y/n] y
   import requests: 40001;
 2020/01/18 21:19:00 Total time: 31m48.467044016s
 ``` 
+
+### Data mapping
+
+Vmctl maps Influx data the same way as VictoriaMetrics does by using the following rules:
+
+* `influx-database` arg is mapped into `db` label value unless `db` tag exists in the Influx line.
+* Field names are mapped to time series names prefixed with {measurement}{separator} value, 
+where {separator} equals to _ by default. 
+It can be changed with `--influx-measurement-field-separator` command-line flag.
+* Field values are mapped to time series values.
+* Tags are mapped to Prometheus labels as-is.
+
+For example, the following Influx line:
+```
+foo,tag1=value1,tag2=value2 field1=12,field2=40
+```
+
+is converted into the following Prometheus data points:
+```
+foo_field1{tag1="value1", tag2="value2"} 12
+foo_field2{tag1="value1", tag2="value2"} 40
+```
 
 ### Configuration
 
