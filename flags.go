@@ -120,6 +120,7 @@ var (
 		&cli.StringFlag{
 			Name:  influxMeasurementFieldSeparator,
 			Usage: "The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}.",
+			Value: "_",
 		},
 	}
 )
