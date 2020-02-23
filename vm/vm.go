@@ -93,7 +93,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 	}
 
 	if cfg.BatchSize < 1 {
-		cfg.BatchSize = 1e3
+		cfg.BatchSize = 1e5
 	}
 
 	im.wg.Add(int(cfg.Concurrency))
