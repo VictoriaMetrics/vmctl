@@ -36,7 +36,7 @@ func (ip *influxProcessor) run() error {
 		return fmt.Errorf("explore query failed: %s", err)
 	}
 	if len(series) < 1 {
-		return fmt.Errorf("found no timeseries to export")
+		return fmt.Errorf("found no timeseries to import")
 	}
 
 	question := fmt.Sprintf("Found %d timeseries to import. Continue?", len(series))
