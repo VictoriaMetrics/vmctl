@@ -273,11 +273,9 @@ Found 2 blocks to import. Continue? [Y/n] y
 2020/02/23 15:51:07 Total time: 7.153158218s
 ```
 
-## Performance
+## Tuning
 
-There are two components that may be configured in order to improve performance.
-
-### InfluxDB
+### Influx mode
 
 The flag `--influx-concurrency` controls how many concurrent requests may be sent to InfluxDB while fetching
 timeseries. Please set it wisely to avoid InfluxDB overwhelming.
@@ -287,7 +285,7 @@ Please see more details [here](https://docs.influxdata.com/influxdb/v1.7/guides/
 The chunk size is used to control InfluxDB memory usage, so it won't OOM on processing large timeseries with 
 billions of datapoints.
 
-### Prometheus
+### Prometheus mode
 
 The flag `--prom-concurrency` controls how many concurrent readers will be reading the blocks in snapshot.
 Since snapshots are just files on disk it would be hard to overwhelm the system. Please go with value equal
