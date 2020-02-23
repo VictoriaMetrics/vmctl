@@ -1,20 +1,18 @@
 # vmctl - Victoria metrics command-line tool
 
 Features:
-- [ ] Prometheus: migrate data from Prometheus to VictoriaMetrics using snapshot API
+- [x] Prometheus: migrate data from Prometheus to VictoriaMetrics using snapshot API
 - [ ] Prometheus: migrate data from Prometheus to VictoriaMetrics by query
 - [x] InfluxDB: migrate data from InfluxDB to VictoriaMetrics
 - [ ] Storage Management: data re-balancing between nodes 
 
-## Migrating data from InfluxDB
-
-### How to build
+# How to build
 
 1. [Install Go](https://golang.org/doc/install). The minimum supported version is Go 1.12.
 2. Run `make build` from the root folder of the repository.
    It builds `vmctl` binary and puts it into the `bin` folder.
-
-### How to use
+   
+## Migrating data from InfluxDB
 
 `vmctl` supports the `influx` mode to migrate data from InfluxDB to VictoriaMetrics time-series database.
 See `help` for details:
@@ -51,7 +49,7 @@ See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
 Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
-is equal to `--httpListenAddr` flag of VMInsert component. Please note that for cluster version it is required to sepcify
+is equal to `--httpListenAddr` flag of VMInsert component. Please note that for cluster version it is required to specify
 the `--vm-account-id` flag as well. See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
 
 As soon as required flags are provided and all endpoints are accessible, `vmctl` will start the InfluxDB scheme exploration.
@@ -135,11 +133,151 @@ Here's an example of importing timeseries for one day only:
 
 Please see more about time filtering [here](https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#filter-meta-queries-by-time).
 
-#### Performance
+
+## Migrating data from Prometheus
+
+`vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
+See `help` for details:
+```
+./vmctl influx --help
+NAME:
+   vmctl prometheus - Migrate timeseries from Prometheus
+
+USAGE:
+   vmctl prometheus [command options] [arguments...]
+
+OPTIONS:
+   --prom-snapshot value            Path to Prometheus snapshot. Pls see for details https://www.robustperception.io/taking-snapshots-of-prometheus-data
+   --prom-concurrency value         Number of concurrently running snapshot readers (default: 1)
+   --prom-filter-time-start value   The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
+   --prom-filter-time-end value     The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
+   --prom-filter-label value        Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.
+   --prom-filter-label-value value  Prometheus regular expression to filter label from "prom-filter-label" flag. (default: ".*")
+   --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
+   --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
+   --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
+   --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
+   --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
+   --vm-compress                    Whether to apply gzip compression to import requests (default: true)
+   --vm-batch-size value            How many datapoints importer collects before sending the import request to VM (default: 200000)
+   --help, -h                       show help (default: false)
+```
+
+To use migration tool please specify the path to Prometheus snapshot `--prom-snapshot` and VictoriaMetrics address `--vm-addr`.
+More about Prometheus snapshots may be found [here](https://www.robustperception.io/taking-snapshots-of-prometheus-data).
+Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
+is equal to `--httpListenAddr` flag of VMInsert component. Please note that for cluster version it is required to specify
+the `--vm-account-id` flag as well. See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
+
+As soon as required flags are provided and all endpoints are accessible, `vmctl` will start the Prometheus snapshot exploration.
+Basically, it just fetches all available blocks in provided snapshot and read the metadata. It also does initial filtering by time
+if flags `--prom-filter-time-start` or `--prom-filter-time-end` were set. The exploration procedure prints some stats from read blocks.
+Please note that stats are not taking into account timeseries or samples filtering. This will be done during importing process.
+ 
+The importing process takes the snapshot blocks revealed from Explore procedure and processes them one by one
+accumulating timeseries and datapoints. The data processed in chunks and then sent to VM. 
+
+The importing process example for local installation of Prometheus 
+and single-node VictoriaMetrics(`http://localhost:8428`):
+```
+./vmctl prometheus --prom-snapshot=/path/to/snapshot --vm-concurrency 1 --vm-batch-size=200000 --prom-concurrency 3
+Prometheus import mode
+Prometheus snapshot stats:
+  blocks found: 14;
+  blocks skipped: 0;
+  min time: 1581288163058 (2020-02-09T22:42:43Z);
+  max time: 1582409128139 (2020-02-22T22:05:28Z);
+  samples: 32549106;
+  series: 27289.
+Filter is not taken into account for series and samples numbers.
+Found 14 blocks to import. Continue? [Y/n] y
+14 / 14 [-------------------------------------------------------------------------------------------] 100.00% 0 p/s
+2020/02/23 15:50:03 Import finished!
+2020/02/23 15:50:03 VictoriaMetrics importer stats:
+  time spent while waiting: 6.152953029s;
+  time spent while importing: 44.908522491s;
+  total datapoints: 32549106;
+  datapoints/s: 724786.84;
+  total bytes: 669.1 MB;
+  bytes/s: 14.9 MB;
+  import requests: 323;
+  import requests retries: 0;
+2020/02/23 15:50:03 Total time: 51.077451066s
+``` 
+
+### Data mapping
+
+VictoriaMetrics has very similar data model to Prometheus and supports [RemoteWrite integration](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage).
+So no data changes will be applied.
+
+### Configuration
+
+The configuration flags should contain self-explanatory descriptions. 
+
+#### Filtering
+
+The filtering consists of three parts: by timeseries and time.
+
+Filtering by time may be configured with flags `--prom-filter-time-start` and `--prom-filter-time-end`.
+This filter applied twice: to drop blocks out of range and to filter timeseries in blocks with
+overlapping time range.
+
+Example of applying time filter:
+```
+./vmctl prometheus --prom-snapshot=/path/to/snapshot --prom-filter-time-start=2020-02-07T00:07:01Z --prom-filter-time-end=2020-02-11T00:07:01Z
+Prometheus import mode
+Prometheus snapshot stats:
+  blocks found: 2;
+  blocks skipped: 12;
+  min time: 1581288163058 (2020-02-09T22:42:43Z);
+  max time: 1581328800000 (2020-02-10T10:00:00Z);
+  samples: 1657698;
+  series: 3930.
+Filter is not taken into account for series and samples numbers.
+Found 2 blocks to import. Continue? [Y/n] y
+```
+
+Please notice, that total amount of blocks in provided snapshot is 14, but only 2 of them were in provided
+time range. So other 12 blocks were marked as `skipped`. The amount of samples and series is not taken into account,
+since this is heavy operation and will be done during import process.
+
+
+Filtering by timeseries is configured with following flags: 
+* `--prom-filter-label` - the label name, e.g. `__name__` or `instance`;
+* `--prom-filter-label-value` - the regular expression to filter the label value. By default matches all `.*`
+
+For example:
+```
+./vmctl prometheus --prom-snapshot=/path/to/snapshot --prom-filter-label="__name__" --prom-filter-label-value="promhttp.*" --prom-filter-time-start=2020-02-07T00:07:01Z --prom-filter-time-end=2020-02-11T00:07:01Z
+Prometheus import mode
+Prometheus snapshot stats:
+  blocks found: 2;
+  blocks skipped: 12;
+  min time: 1581288163058 (2020-02-09T22:42:43Z);
+  max time: 1581328800000 (2020-02-10T10:00:00Z);
+  samples: 1657698;
+  series: 3930.
+Filter is not taken into account for series and samples numbers.
+Found 2 blocks to import. Continue? [Y/n] y
+14 / 14 [------------------------------------------------------------------------------------------------------------------------------------------------------] 100.00% ? p/s
+2020/02/23 15:51:07 Import finished!
+2020/02/23 15:51:07 VictoriaMetrics importer stats:
+  time spent while waiting: 0s;
+  time spent while importing: 37.415461ms;
+  total datapoints: 10128;
+  datapoints/s: 270690.24;
+  total bytes: 195.2 kB;
+  bytes/s: 5.2 MB;
+  import requests: 2;
+  import requests retries: 0;
+2020/02/23 15:51:07 Total time: 7.153158218s
+```
+
+## Performance
 
 There are two components that may be configured in order to improve performance.
 
-##### InfluxDB
+### InfluxDB
 
 The flag `--influx-concurrency` controls how many concurrent requests may be sent to InfluxDB while fetching
 timeseries. Please set it wisely to avoid InfluxDB overwhelming.
@@ -149,7 +287,13 @@ Please see more details [here](https://docs.influxdata.com/influxdb/v1.7/guides/
 The chunk size is used to control InfluxDB memory usage, so it won't OOM on processing large timeseries with 
 billions of datapoints.
 
-##### VictoriaMetrics importer
+### Prometheus
+
+The flag `--prom-concurrency` controls how many concurrent readers will be reading the blocks in snapshot.
+Since snapshots are just files on disk it would be hard to overwhelm the system. Please go with value equal
+to number of free CPU cores.
+
+### VictoriaMetrics importer
 
 The flag `--vm-concurrency` controls the number of concurrent workers that process the input from InfluxDB query results.
 Please note that each import request can load up to a single vCPU core on VictoriaMetrics. So try to set it according
@@ -159,14 +303,18 @@ The flag `--vm-batch-size` controls max amount of datapoints collected before se
 For example, if  `--influx-chunk-size=500` and `--vm-batch-size=2000` then importer will process not more 
 than 4 chunks before sending the request. 
 
-#### Importer stats
+### Importer stats
 
 After successful import `vmctl` prints some statistics for details. 
 The important numbers to watch are following:
  - `time spent while waiting` - how much time importer spent while waiting for data from
  InfluxDB and grouping it into batches. This value may tell if InfluxDB fetches were slow
- which probably may be improved by increasing `--influx-concurrency`
+ which probably may be improved by increasing `--<mode>-concurrency`.
  - `time spent while importing` - how much time importer spent while serializing data
  and executing import requests. The high number comparing to `time spent while waiting`
  may be a sign of VM being overloaded by import requests or other clients.
- 
+- `import requests` - shows how many import requests were issued to VM server.
+The import request is issued once the batch size(`--vm-batch-size`) is full and ready to be sent.
+Please prefer big batch sizes (50k-500k) to improve performance.
+
+  
