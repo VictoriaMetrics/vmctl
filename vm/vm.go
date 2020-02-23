@@ -296,6 +296,7 @@ func do(req *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("unexpected error when performing request: %s", err)
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
