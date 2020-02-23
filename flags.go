@@ -1,6 +1,9 @@
 package main
 
-import "github.com/urfave/cli/v2"
+import (
+	"fmt"
+	"github.com/urfave/cli/v2"
+)
 
 const (
 	vmAddr        = "vm-addr"
@@ -121,6 +124,47 @@ var (
 			Name:  influxMeasurementFieldSeparator,
 			Usage: "The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}.",
 			Value: "_",
+		},
+	}
+)
+
+const (
+	promSnapshot         = "prom-snapshot"
+	promConcurrency      = "prom-concurrency"
+	promFilterTimeStart  = "prom-filter-time-start"
+	promFilterTimeEnd    = "prom-filter-time-end"
+	promFilterLabel      = "prom-filter-label"
+	promFilterLabelValue = "prom-filter-label-value"
+)
+
+var (
+	promFlags = []cli.Flag{
+		&cli.StringFlag{
+			Name:     promSnapshot,
+			Usage:    "Path to Prometheus snapshot. Pls see for details https://www.robustperception.io/taking-snapshots-of-prometheus-data",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:  promConcurrency,
+			Usage: "Number of concurrently running snapshot readers",
+			Value: 1,
+		},
+		&cli.StringFlag{
+			Name:  promFilterTimeStart,
+			Usage: "The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name:  promFilterTimeEnd,
+			Usage: "The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name:  promFilterLabel,
+			Usage: "Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.",
+		},
+		&cli.StringFlag{
+			Name:  promFilterLabelValue,
+			Usage: fmt.Sprintf("Prometheus regular expression to filter label from %q flag.", promFilterLabel),
+			Value: ".*",
 		},
 	}
 )
