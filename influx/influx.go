@@ -36,6 +36,8 @@ type Config struct {
 	Filter Filter
 }
 
+// Filter contains configuration for filtering
+// the timeseries
 type Filter struct {
 	Series    string
 	TimeStart string
