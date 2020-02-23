@@ -139,7 +139,7 @@ Please see more about time filtering [here](https://docs.influxdata.com/influxdb
 `vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
 See `help` for details:
 ```
-./vmctl influx --help
+./vmctl prometheus --help
 NAME:
    vmctl prometheus - Migrate timeseries from Prometheus
 
