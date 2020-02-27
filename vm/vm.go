@@ -86,7 +86,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 		password:   cfg.Password,
 		close:      make(chan struct{}),
 		input:      make(chan *TimeSeries, cfg.Concurrency*4),
-		errors:     make(chan *ImportError),
+		errors:     make(chan *ImportError, cfg.Concurrency),
 	}
 	if err := im.Ping(); err != nil {
 		return nil, fmt.Errorf("ping to %q failed: %s", addr, err)
