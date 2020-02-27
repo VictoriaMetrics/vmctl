@@ -12,8 +12,16 @@ import (
 )
 
 type prometheusProcessor struct {
+	// prometheus client fetches and reads
+	// snapshot blocks
 	cl *prometheus.Client
+	// importer performs import requests
+	// for timeseries data returned from
+	// snapshot blocks
 	im *vm.Importer
+	// cc stands for concurrency
+	// and defines number of concurrently
+	// running snapshot block readers
 	cc int
 }
 
@@ -25,7 +33,6 @@ func (pp *prometheusProcessor) run() error {
 	if len(blocks) < 1 {
 		return fmt.Errorf("found no blocks to import")
 	}
-
 	question := fmt.Sprintf("Found %d blocks to import. Continue?", len(blocks))
 	if !prompt(question) {
 		return nil
@@ -33,7 +40,7 @@ func (pp *prometheusProcessor) run() error {
 
 	bar := pb.StartNew(len(blocks))
 	blockReadersCh := make(chan tsdb.BlockReader)
-	errCh := make(chan error)
+	errCh := make(chan error, pp.cc)
 
 	var wg sync.WaitGroup
 	wg.Add(pp.cc)
@@ -42,7 +49,7 @@ func (pp *prometheusProcessor) run() error {
 			defer wg.Done()
 			for br := range blockReadersCh {
 				if err := pp.do(br); err != nil {
-					errCh <- fmt.Errorf("request failed for block %q: %s", br.Meta().ULID, err)
+					errCh <- fmt.Errorf("read failed for block %q: %s", br.Meta().ULID, err)
 					return
 				}
 				bar.Increment()
@@ -54,8 +61,10 @@ func (pp *prometheusProcessor) run() error {
 	for _, br := range blocks {
 		select {
 		case promErr := <-errCh:
+			close(blockReadersCh)
 			return fmt.Errorf("prometheus error: %s", promErr)
 		case vmErr := <-pp.im.Errors():
+			close(blockReadersCh)
 			var errTS string
 			for _, ts := range vmErr.Batch {
 				errTS += fmt.Sprintf("%s for timestamps range %d - %d\n",
@@ -68,6 +77,7 @@ func (pp *prometheusProcessor) run() error {
 
 	close(blockReadersCh)
 	wg.Wait()
+	// wait for all buffers to flush
 	pp.im.Close()
 	bar.Finish()
 	log.Println("Import finished!")
