@@ -2,7 +2,7 @@
 
 Features:
 - [x] Prometheus: migrate data from Prometheus to VictoriaMetrics using snapshot API
-- [ ] Prometheus: migrate data from Prometheus to VictoriaMetrics by query
+- [ ] ~~Prometheus: migrate data from Prometheus to VictoriaMetrics by query~~(discarded)
 - [x] InfluxDB: migrate data from InfluxDB to VictoriaMetrics
 - [ ] Storage Management: data re-balancing between nodes 
 
