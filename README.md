@@ -89,14 +89,14 @@ Vmctl maps Influx data the same way as VictoriaMetrics does by using the followi
 where {separator} equals to _ by default. 
 It can be changed with `--influx-measurement-field-separator` command-line flag.
 * Field values are mapped to time series values.
-* Tags are mapped to Prometheus labels as-is.
+* Tags are mapped to Prometheus labels format as-is.
 
 For example, the following Influx line:
 ```
 foo,tag1=value1,tag2=value2 field1=12,field2=40
 ```
 
-is converted into the following Prometheus data points:
+is converted into the following Prometheus format data points:
 ```
 foo_field1{tag1="value1", tag2="value2"} 12
 foo_field2{tag1="value1", tag2="value2"} 40
@@ -137,6 +137,10 @@ Please see more about time filtering [here](https://docs.influxdata.com/influxdb
 ## Migrating data from Prometheus
 
 `vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
+Migration is based on reading Prometheus snapshot, which is basically a hard-link to Prometheus data files.
+Thanos uses the same storage engine as Prometheus and the data layout on-disk should be the same. That means
+`vmctl` may be used for Thanos historical data migration as well.
+
 See `help` for details:
 ```
 ./vmctl prometheus --help
@@ -306,8 +310,8 @@ than 4 chunks before sending the request.
 After successful import `vmctl` prints some statistics for details. 
 The important numbers to watch are following:
  - `time spent while waiting` - how much time importer spent while waiting for data from
- InfluxDB and grouping it into batches. This value may tell if InfluxDB fetches were slow
- which probably may be improved by increasing `--<mode>-concurrency`.
+ InfluxDB/Prometheus and grouping it into batches. This value may tell if InfluxDB fetches 
+ were slow which probably may be improved by increasing `--<mode>-concurrency`.
  - `time spent while importing` - how much time importer spent while serializing data
  and executing import requests. The high number comparing to `time spent while waiting`
  may be a sign of VM being overloaded by import requests or other clients.
