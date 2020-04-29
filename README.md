@@ -2,6 +2,7 @@
 
 Features:
 - [x] Prometheus: migrate data from Prometheus to VictoriaMetrics using snapshot API
+- [x] Thanos: migrate data from Thanos to VictoriaMetrics
 - [ ] ~~Prometheus: migrate data from Prometheus to VictoriaMetrics by query~~(discarded)
 - [x] InfluxDB: migrate data from InfluxDB to VictoriaMetrics
 - [ ] Storage Management: data re-balancing between nodes 
@@ -138,8 +139,6 @@ Please see more about time filtering [here](https://docs.influxdata.com/influxdb
 
 `vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
 Migration is based on reading Prometheus snapshot, which is basically a hard-link to Prometheus data files.
-Thanos uses the same storage engine as Prometheus and the data layout on-disk should be the same. That means
-`vmctl` may be used for Thanos historical data migration as well.
 
 See `help` for details:
 ```
@@ -276,6 +275,46 @@ Found 2 blocks to import. Continue? [Y/n] y
   import requests retries: 0;
 2020/02/23 15:51:07 Total time: 7.153158218s
 ```
+
+## Migrating data from Thanos
+
+Thanos uses the same storage engine as Prometheus and the data layout on-disk should be the same. That means
+`vmctl` in mode `prometheus` may be used for Thanos historical data migration as well.
+These instructions may vary based on the details of your Thanos configuration. 
+Please read carefully and verify as you go. We assume you're using Thanos Sidecar on your Prometheus pods, 
+and that you have a separate Thanos Store installation.
+
+### Current data
+
+1. For now, keep your Thanos Sidecar and Thanos-related Prometheus configuration, but add this to also stream 
+    metrics to VictoriaMetrics:
+    ```
+    remote_write:
+    - url: http://victoria-metrics:8428/api/v1/write
+    ```
+2. Make sure VM is running, of course. Now check the logs to make sure that Prometheus is sending and VM is receiving. 
+    In Prometheus, make sure there are no errors. On the VM side, you should see messages like this:
+    ```
+    2020-04-27T18:38:46.474Z	info	VictoriaMetrics/lib/storage/partition.go:207	creating a partition "2020_04" with smallPartsPath="/victoria-metrics-data/data/small/2020_04", bigPartsPath="/victoria-metrics-data/data/big/2020_04"
+    2020-04-27T18:38:46.506Z	info	VictoriaMetrics/lib/storage/partition.go:222	partition "2020_04" has been created
+    ```
+3. Now just wait. Within two hours, Prometheus should finish its current data file and hand it off to Thanos Store for long term
+    storage.
+
+### Historical data
+
+Let's assume your data is stored on S3 served by minio. You first need to copy that out to a local filesystem, 
+then import it into VM using `vmctl` in `prometheus` mode.
+1. Copy data from minio.
+    1. Run the `minio/mc` Docker container.
+    1. `mc config host add minio http://minio:9000 accessKey secretKey`, substituting appropriate values for the last 3 items.
+    1. `mc cp -r minio/prometheus thanos-data`
+1. Import using `vmctl`.
+    1. Follow the [instructions](https://github.com/VictoriaMetrics/vmctl/) to compile `vmctl` on your machine.
+    1. Use [prometheus](https://github.com/VictoriaMetrics/vmctl#how-to-build) mode to import data: 
+    ```
+    vmctl prometheus --prom-snapshot thanos-data --vm-addr http://victoria-metrics:8428
+    ```
 
 ## Tuning
 
