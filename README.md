@@ -7,7 +7,28 @@ Features:
 - [x] InfluxDB: migrate data from InfluxDB to VictoriaMetrics
 - [ ] Storage Management: data re-balancing between nodes 
 
-# How to build
+# Table of contents
+
+* [How to build](#how-to-build)
+* [Migrating data from InfluxDB](#migrating-data-from-influxdb)
+   * [Data mapping](#data-mapping)
+   * [Configuration](#configuration)
+   * [Filtering](#filtering)
+* [Migrating data from Prometheus](#migrating-data-from-prometheus)
+   * [Data mapping](#data-mapping-1)
+   * [Configuration](#configuration-1)
+   * [Filtering](#filtering-1)
+* [Migrating data from Thanos](#migrating-data-from-thanos)
+   * [Current data](#current-data)
+   * [Historical data](#historical-data)
+* [Tuning](#tuning)
+   * [Influx mode](#influx-mode)
+   * [Prometheus mode](#prometheus-mode)
+   * [VictoriaMetrics importer](#victoriametrics-importer)
+   * [Importer stats](#importer-stats)
+
+
+## How to build
 
 1. [Install Go](https://golang.org/doc/install). The minimum supported version is Go 1.12.
 2. Run `make build` from the root folder of the repository.
@@ -107,7 +128,7 @@ foo_field2{tag1="value1", tag2="value2"} 40
 
 The configuration flags should contain self-explanatory descriptions. 
 
-#### Filtering
+### Filtering
 
 The filtering consists of two parts: timeseries and time.
 The first step of application is to select all available timeseries
@@ -217,7 +238,7 @@ So no data changes will be applied.
 
 The configuration flags should contain self-explanatory descriptions. 
 
-#### Filtering
+### Filtering
 
 The filtering consists of three parts: by timeseries and time.
 
