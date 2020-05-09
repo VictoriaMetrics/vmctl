@@ -45,12 +45,12 @@ func TestFetchQuery(t *testing.T) {
 				LabelPairs: []LabelPair{
 					{
 						Name:  "foo",
-						Value: "bar",
+						Value: "b'ar",
 					},
 				},
 			},
 			timeFilter: "time >= now()",
-			expected:   `select "value" from "cpu" where "foo"='bar' and time >= now()`,
+			expected:   `select "value" from "cpu" where "foo"='b\'ar' and time >= now()`,
 		},
 		{
 			s: Series{
@@ -72,7 +72,7 @@ func TestFetchQuery(t *testing.T) {
 	for _, tc := range testCases {
 		query := tc.s.fetchQuery(tc.timeFilter)
 		if query != tc.expected {
-			t.Fatalf("got: \n%q;\nexpected: \n%q", query, tc.expected)
+			t.Fatalf("got: \n%s;\nexpected: \n%s", query, tc.expected)
 		}
 	}
 }
