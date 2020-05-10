@@ -56,6 +56,24 @@ func TestFetchQuery(t *testing.T) {
 			s: Series{
 				Measurement: "cpu",
 				Field:       "value",
+				LabelPairs: []LabelPair{
+					{
+						Name:  "name",
+						Value: `dev-mapper-centos\x2dswap.swap`,
+					},
+					{
+						Name:  "state",
+						Value: "dev-mapp'er-c'en'tos",
+					},
+				},
+			},
+			timeFilter: "time >= now()",
+			expected:   `select "value" from "cpu" where "name"='dev-mapper-centos\\x2dswap.swap' and "state"='dev-mapp\'er-c\'en\'tos' and time >= now()`,
+		},
+		{
+			s: Series{
+				Measurement: "cpu",
+				Field:       "value",
 			},
 			timeFilter: "time >= now()",
 			expected:   `select "value" from "cpu" where time >= now()`,

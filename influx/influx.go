@@ -51,6 +51,8 @@ type Series struct {
 	LabelPairs  []LabelPair
 }
 
+var valueEscaper = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
+
 func (s Series) fetchQuery(timeFilter string) string {
 	f := &strings.Builder{}
 	fmt.Fprintf(f, "select %q from %q", s.Field, s.Measurement)
@@ -58,7 +60,7 @@ func (s Series) fetchQuery(timeFilter string) string {
 		f.WriteString(" where")
 	}
 	for i, pair := range s.LabelPairs {
-		pairV := strings.ReplaceAll(pair.Value, "'", "\\'")
+		pairV := valueEscaper.Replace(pair.Value)
 		fmt.Fprintf(f, " %q='%s'", pair.Name, pairV)
 		if i != len(s.LabelPairs)-1 {
 			f.WriteString(" and")
