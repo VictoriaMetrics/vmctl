@@ -21,7 +21,7 @@ var (
 			Name:  vmAddr,
 			Value: "http://localhost:8428",
 			Usage: "VictoriaMetrics address to perform import requests. " +
-				"Should be the same as --httpListenAddr value for single-node version or VMSelect component.",
+				"Should be the same as --httpListenAddr value for single-node version or VMInsert component.",
 		},
 		&cli.StringFlag{
 			Name:    vmUser,

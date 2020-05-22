@@ -59,7 +59,7 @@ See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_
    --influx-filter-time-start value            The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
    --influx-filter-time-end value              The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
    --influx-measurement-field-separator value  The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}. (default: "_")
-   --vm-addr value                             VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
+   --vm-addr value                             VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMInsert component. (default: "http://localhost:8428")
    --vm-user value                             VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value                         VictoriaMetrics password for basic auth [$VM_PASSWORD]
    --vm-account-id value                       Account(tenant) ID - is required for cluster VM. (default: -1)
@@ -177,7 +177,7 @@ OPTIONS:
    --prom-filter-time-end value     The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
    --prom-filter-label value        Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.
    --prom-filter-label-value value  Prometheus regular expression to filter label from "prom-filter-label" flag. (default: ".*")
-   --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMSelect component. (default: "http://localhost:8428")
+   --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMInsert component. (default: "http://localhost:8428")
    --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
    --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
