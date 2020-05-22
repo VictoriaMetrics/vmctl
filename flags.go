@@ -20,8 +20,9 @@ var (
 		&cli.StringFlag{
 			Name:  vmAddr,
 			Value: "http://localhost:8428",
-			Usage: "VictoriaMetrics address to perform import requests. " +
-				"Should be the same as --httpListenAddr value for single-node version or VMInsert component.",
+			Usage: "VictoriaMetrics address to perform import requests. \n" +
+				"Should be the same as --httpListenAddr value for single-node version or VMInsert component. \n" +
+				"Please note, that `vmctl` performs initial readiness check for the given address by checking `/health` endpoint.",
 		},
 		&cli.StringFlag{
 			Name:    vmUser,

@@ -59,7 +59,9 @@ See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_
    --influx-filter-time-start value            The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
    --influx-filter-time-end value              The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
    --influx-measurement-field-separator value  The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}. (default: "_")
-   --vm-addr value                             VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMInsert component. (default: "http://localhost:8428")
+   --vm-addr vmctl                  VictoriaMetrics address to perform import requests. 
+Should be the same as --httpListenAddr value for single-node version or VMInsert component. 
+Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
    --vm-user value                             VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value                         VictoriaMetrics password for basic auth [$VM_PASSWORD]
    --vm-account-id value                       Account(tenant) ID - is required for cluster VM. (default: -1)
@@ -71,8 +73,9 @@ See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
 Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
-is equal to `--httpListenAddr` flag of VMInsert component. Please note that for cluster version it is required to specify
-the `--vm-account-id` flag as well. See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
+is equal to `--httpListenAddr` flag of VMInsert component. Please note, that vmctl performs initial readiness check for the given address 
+by checking `/health` endpoint. For cluster version it is additionally required to specify the `--vm-account-id` flag. 
+See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
 
 As soon as required flags are provided and all endpoints are accessible, `vmctl` will start the InfluxDB scheme exploration.
 Basically, it just fetches all fields and timeseries from the provided database and builds up registry of all available timeseries.
@@ -177,7 +180,9 @@ OPTIONS:
    --prom-filter-time-end value     The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
    --prom-filter-label value        Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.
    --prom-filter-label-value value  Prometheus regular expression to filter label from "prom-filter-label" flag. (default: ".*")
-   --vm-addr value                  VictoriaMetrics address to perform import requests. Should be the same as --httpListenAddr value for single-node version or VMInsert component. (default: "http://localhost:8428")
+   --vm-addr vmctl                  VictoriaMetrics address to perform import requests. 
+Should be the same as --httpListenAddr value for single-node version or VMInsert component. 
+Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
    --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
    --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
@@ -190,8 +195,9 @@ OPTIONS:
 To use migration tool please specify the path to Prometheus snapshot `--prom-snapshot` and VictoriaMetrics address `--vm-addr`.
 More about Prometheus snapshots may be found [here](https://www.robustperception.io/taking-snapshots-of-prometheus-data).
 Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
-is equal to `--httpListenAddr` flag of VMInsert component. Please note that for cluster version it is required to specify
-the `--vm-account-id` flag as well. See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
+is equal to `--httpListenAddr` flag of VMInsert component. Please note, that vmctl performs initial readiness check for the given address 
+by checking `/health` endpoint. For cluster version it is additionally required to specify the `--vm-account-id` flag. 
+See more details for cluster version [here](https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster).
 
 As soon as required flags are provided and all endpoints are accessible, `vmctl` will start the Prometheus snapshot exploration.
 Basically, it just fetches all available blocks in provided snapshot and read the metadata. It also does initial filtering by time
