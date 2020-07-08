@@ -29,7 +29,7 @@ type Config struct {
 	// AccountID for cluster version
 	// Less than 0 assumes single node version
 	AccountID int
-	// BatchSize defines how many datapoints
+	// BatchSize defines how many samples
 	// importer collects before sending the import request
 	BatchSize int
 	// User name for basic auth
@@ -252,14 +252,14 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	}
 	bw := bufio.NewWriterSize(w, 16*1024)
 
-	var totalDP, totalBytes int
+	var totalSamples, totalBytes int
 	for _, ts := range tsBatch {
 		n, err := ts.write(bw)
 		if err != nil {
 			return fmt.Errorf("write err: %w", err)
 		}
 		totalBytes += n
-		totalDP += len(ts.Values)
+		totalSamples += len(ts.Values)
 	}
 	if err := bw.Flush(); err != nil {
 		return err
@@ -281,7 +281,7 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 
 	im.s.Lock()
 	im.s.bytes += uint64(totalBytes)
-	im.s.datapoints += uint64(totalDP)
+	im.s.samples += uint64(totalSamples)
 	im.s.requests++
 	im.s.importDuration += time.Since(start)
 	im.s.Unlock()

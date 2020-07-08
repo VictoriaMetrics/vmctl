@@ -67,7 +67,7 @@ Please note, that vmctl performs initial readiness check for the given address b
    --vm-account-id value                       Account(tenant) ID - is required for cluster VM. (default: -1)
    --vm-concurrency value                      Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                               Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value                       How many datapoints importer collects before sending the import request to VM (default: 200000)
+   --vm-batch-size value                       How many samples importer collects before sending the import request to VM (default: 200000)
    --help, -h                                  show help (default: false)
 ```
 
@@ -80,7 +80,7 @@ See more details for cluster version [here](https://github.com/VictoriaMetrics/V
 As soon as required flags are provided and all endpoints are accessible, `vmctl` will start the InfluxDB scheme exploration.
 Basically, it just fetches all fields and timeseries from the provided database and builds up registry of all available timeseries.
 Then `vmctl` sends fetch requests for each timeseries to InfluxDB one by one and pass results to VM importer.
-VM importer then accumulates received datapoints in batches and sends import requests to VM.
+VM importer then accumulates received samples in batches and sends import requests to VM.
 
 The importing process example for local installation of InfluxDB(`http://localhost:8086`) 
 and single-node VictoriaMetrics(`http://localhost:8428`):
@@ -97,8 +97,8 @@ Found 40000 timeseries to import. Continue? [Y/n] y
 2020/01/18 21:19:00 VictoriaMetrics importer stats:
   time spent while waiting: 13m51.461434876s;
   time spent while importing: 17m56.923899847s;
-  total datapoints: 345600000;
-  datapoints/s: 320914.04;
+  total samples: 345600000;
+  samples/s: 320914.04;
   total bytes: 5.9 GB;
   bytes/s: 5.4 MB;
   import requests: 40001;
@@ -188,7 +188,7 @@ Please note, that vmctl performs initial readiness check for the given address b
    --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
    --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                    Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value            How many datapoints importer collects before sending the import request to VM (default: 200000)
+   --vm-batch-size value            How many samples importer collects before sending the import request to VM (default: 200000)
    --help, -h                       show help (default: false)
 ```
 
@@ -205,7 +205,7 @@ if flags `--prom-filter-time-start` or `--prom-filter-time-end` were set. The ex
 Please note that stats are not taking into account timeseries or samples filtering. This will be done during importing process.
  
 The importing process takes the snapshot blocks revealed from Explore procedure and processes them one by one
-accumulating timeseries and datapoints. The data processed in chunks and then sent to VM. 
+accumulating timeseries and samples. The data processed in chunks and then sent to VM. 
 
 The importing process example for local installation of Prometheus 
 and single-node VictoriaMetrics(`http://localhost:8428`):
@@ -226,8 +226,8 @@ Found 14 blocks to import. Continue? [Y/n] y
 2020/02/23 15:50:03 VictoriaMetrics importer stats:
   time spent while waiting: 6.152953029s;
   time spent while importing: 44.908522491s;
-  total datapoints: 32549106;
-  datapoints/s: 724786.84;
+  total samples: 32549106;
+  samples/s: 724786.84;
   total bytes: 669.1 MB;
   bytes/s: 14.9 MB;
   import requests: 323;
@@ -294,8 +294,8 @@ Found 2 blocks to import. Continue? [Y/n] y
 2020/02/23 15:51:07 VictoriaMetrics importer stats:
   time spent while waiting: 0s;
   time spent while importing: 37.415461ms;
-  total datapoints: 10128;
-  datapoints/s: 270690.24;
+  total samples: 10128;
+  samples/s: 270690.24;
   total bytes: 195.2 kB;
   bytes/s: 5.2 MB;
   import requests: 2;
@@ -367,7 +367,7 @@ The flag `--vm-concurrency` controls the number of concurrent workers that proce
 Please note that each import request can load up to a single vCPU core on VictoriaMetrics. So try to set it according
 to allocated CPU resources of your VictoriMetrics installation.
 
-The flag `--vm-batch-size` controls max amount of datapoints collected before sending the import request.
+The flag `--vm-batch-size` controls max amount of samples collected before sending the import request.
 For example, if  `--influx-chunk-size=500` and `--vm-batch-size=2000` then importer will process not more 
 than 4 chunks before sending the request. 
 

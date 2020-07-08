@@ -8,7 +8,7 @@ import (
 
 type stats struct {
 	sync.Mutex
-	datapoints     uint64
+	samples        uint64
 	bytes          uint64
 	requests       uint64
 	retries        uint64
@@ -23,14 +23,14 @@ func (s *stats) String() string {
 	return fmt.Sprintf("VictoriaMetrics importer stats:\n"+
 		"  time spent while waiting: %v;\n"+
 		"  time spent while importing: %v;\n"+
-		"  total datapoints: %d;\n"+
-		"  datapoints/s: %.2f;\n"+
+		"  total samples: %d;\n"+
+		"  samples/s: %.2f;\n"+
 		"  total bytes: %s;\n"+
 		"  bytes/s: %s;\n"+
 		"  import requests: %d;\n"+
 		"  import requests retries: %d;",
 		s.idleDuration, s.importDuration,
-		s.datapoints, float64(s.datapoints)/s.importDuration.Seconds(),
+		s.samples, float64(s.samples)/s.importDuration.Seconds(),
 		byteCountSI(int64(s.bytes)), byteCountSI(int64(float64(s.bytes)/s.importDuration.Seconds())),
 		s.requests, s.retries)
 }

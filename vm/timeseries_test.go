@@ -28,7 +28,7 @@ func TestTimeSeries_Write(t *testing.T) {
 			exp: `{"metric":{"__name__":"foo","key":"val"},"timestamps":[1577877162200],"values":[1]}`,
 		},
 		{
-			name: "multiple datapoints",
+			name: "multiple samples",
 			ts: &TimeSeries{
 				Name: "foo",
 				LabelPairs: []LabelPair{
@@ -43,7 +43,7 @@ func TestTimeSeries_Write(t *testing.T) {
 			exp: `{"metric":{"__name__":"foo","key":"val"},"timestamps":[1577877162200,15778771622400,15778771622600],"values":[1,1.6263,32.123]}`,
 		},
 		{
-			name: "no datapoints",
+			name: "no samples",
 			ts: &TimeSeries{
 				Name: "foo",
 				LabelPairs: []LabelPair{

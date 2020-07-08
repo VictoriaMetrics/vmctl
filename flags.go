@@ -52,7 +52,7 @@ var (
 		&cli.IntFlag{
 			Name:  vmBatchSize,
 			Value: 200e3,
-			Usage: "How many datapoints importer collects before sending the import request to VM",
+			Usage: "How many samples importer collects before sending the import request to VM",
 		},
 	}
 )
