@@ -20,6 +20,17 @@ type stats struct {
 func (s *stats) String() string {
 	s.Lock()
 	defer s.Unlock()
+
+	importDurationS := s.importDuration.Seconds()
+	var samplesPerS float64
+	if s.samples > 0 && importDurationS > 0 {
+		samplesPerS = float64(s.samples) / importDurationS
+	}
+	bytesPerS := byteCountSI(0)
+	if s.bytes > 0 && importDurationS > 0 {
+		bytesPerS = byteCountSI(int64(float64(s.bytes) / importDurationS))
+	}
+
 	return fmt.Sprintf("VictoriaMetrics importer stats:\n"+
 		"  time spent while waiting: %v;\n"+
 		"  time spent while importing: %v;\n"+
@@ -30,7 +41,7 @@ func (s *stats) String() string {
 		"  import requests: %d;\n"+
 		"  import requests retries: %d;",
 		s.idleDuration, s.importDuration,
-		s.samples, float64(s.samples)/s.importDuration.Seconds(),
-		byteCountSI(int64(s.bytes)), byteCountSI(int64(float64(s.bytes)/s.importDuration.Seconds())),
+		s.samples, samplesPerS,
+		byteCountSI(int64(s.bytes)), bytesPerS,
 		s.requests, s.retries)
 }
