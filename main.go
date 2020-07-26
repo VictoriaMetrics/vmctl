@@ -26,7 +26,7 @@ func main() {
 			{
 				Name:  "influx",
 				Usage: "Migrate timeseries from InfluxDB",
-				Flags: append(influxFlags, vmFlags...),
+				Flags: mergeFlags(globalFlags, influxFlags, vmFlags),
 				Action: func(c *cli.Context) error {
 					fmt.Println("InfluxDB import mode")
 
@@ -63,13 +63,13 @@ func main() {
 
 					processor := newInfluxProcessor(influxClient, importer,
 						c.Int(influxConcurrency), c.String(influxMeasurementFieldSeparator))
-					return processor.run()
+					return processor.run(c.Bool(globalSilent))
 				},
 			},
 			{
 				Name:  "prometheus",
 				Usage: "Migrate timeseries from Prometheus",
-				Flags: append(promFlags, vmFlags...),
+				Flags: mergeFlags(globalFlags, promFlags, vmFlags),
 				Action: func(c *cli.Context) error {
 					fmt.Println("Prometheus import mode")
 
@@ -103,7 +103,7 @@ func main() {
 						im: importer,
 						cc: c.Int(promConcurrency),
 					}
-					return pp.run()
+					return pp.run(c.Bool(globalSilent))
 				},
 			},
 		},

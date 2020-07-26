@@ -6,6 +6,20 @@ import (
 )
 
 const (
+	globalSilent = "s"
+)
+
+var (
+	globalFlags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:  globalSilent,
+			Value: false,
+			Usage: "Whether to run in silent mode. If set to true no confirmation prompts will appear.",
+		},
+	}
+)
+
+const (
 	vmAddr        = "vm-addr"
 	vmUser        = "vm-user"
 	vmPassword    = "vm-password"
@@ -169,3 +183,11 @@ var (
 		},
 	}
 )
+
+func mergeFlags(flags ...[]cli.Flag) []cli.Flag {
+	var result []cli.Flag
+	for _, f := range flags {
+		result = append(result, f...)
+	}
+	return result
+}

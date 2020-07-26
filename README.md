@@ -385,4 +385,10 @@ The important numbers to watch are following:
 The import request is issued once the batch size(`--vm-batch-size`) is full and ready to be sent.
 Please prefer big batch sizes (50k-500k) to improve performance.
 
-  
+### Silent mode
+
+By default `vmctl` waits confirmation from user before starting the import. If this is unwanted
+behavior and no user interaction required - pass `-s` flag to enable "silence" mode:
+```
+    -s Whether to run in silent mode. If set to true no confirmation prompts will appear. (default: false)
+```

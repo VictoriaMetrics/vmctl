@@ -25,7 +25,7 @@ type prometheusProcessor struct {
 	cc int
 }
 
-func (pp *prometheusProcessor) run() error {
+func (pp *prometheusProcessor) run(silent bool) error {
 	blocks, err := pp.cl.Explore()
 	if err != nil {
 		return fmt.Errorf("explore failed: %s", err)
@@ -34,7 +34,7 @@ func (pp *prometheusProcessor) run() error {
 		return fmt.Errorf("found no blocks to import")
 	}
 	question := fmt.Sprintf("Found %d blocks to import. Continue?", len(blocks))
-	if !prompt(question) {
+	if !silent && !prompt(question) {
 		return nil
 	}
 
