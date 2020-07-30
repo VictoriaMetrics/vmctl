@@ -69,12 +69,7 @@ func (ip *influxProcessor) run(silent bool) error {
 		case infErr := <-errCh:
 			return fmt.Errorf("influx error: %s", infErr)
 		case vmErr := <-ip.im.Errors():
-			var errTS string
-			for _, ts := range vmErr.Batch {
-				errTS += fmt.Sprintf("%s for timestamps range %d - %d\n",
-					ts.String(), ts.Timestamps[0], ts.Timestamps[len(ts.Timestamps)-1])
-			}
-			return fmt.Errorf("Import process failed for: \n%swith error: %s", errTS, vmErr.Err)
+			return fmt.Errorf("Import process failed: \n%s", wrapErr(vmErr))
 		case seriesCh <- s:
 		}
 	}
@@ -82,6 +77,10 @@ func (ip *influxProcessor) run(silent bool) error {
 	close(seriesCh)
 	wg.Wait()
 	ip.im.Close()
+	// drain import errors channel
+	for vmErr := range ip.im.Errors() {
+		return fmt.Errorf("Import process failed: \n%s", wrapErr(vmErr))
+	}
 	bar.Finish()
 	log.Println("Import finished!")
 	log.Print(ip.im.Stats())

@@ -130,6 +130,7 @@ func (im *Importer) Close() {
 	im.once.Do(func() {
 		close(im.close)
 		im.wg.Wait()
+		close(im.errors)
 	})
 }
 

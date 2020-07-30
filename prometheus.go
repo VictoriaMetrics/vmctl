@@ -65,12 +65,7 @@ func (pp *prometheusProcessor) run(silent bool) error {
 			return fmt.Errorf("prometheus error: %s", promErr)
 		case vmErr := <-pp.im.Errors():
 			close(blockReadersCh)
-			var errTS string
-			for _, ts := range vmErr.Batch {
-				errTS += fmt.Sprintf("%s for timestamps range %d - %d\n",
-					ts.String(), ts.Timestamps[0], ts.Timestamps[len(ts.Timestamps)-1])
-			}
-			return fmt.Errorf("Import process failed for: \n%swith error: %s", errTS, vmErr.Err)
+			return fmt.Errorf("Import process failed: \n%s", wrapErr(vmErr))
 		case blockReadersCh <- br:
 		}
 	}
@@ -79,6 +74,10 @@ func (pp *prometheusProcessor) run(silent bool) error {
 	wg.Wait()
 	// wait for all buffers to flush
 	pp.im.Close()
+	// drain import errors channel
+	for vmErr := range pp.im.Errors() {
+		return fmt.Errorf("Import process failed: \n%s", wrapErr(vmErr))
+	}
 	bar.Finish()
 	log.Println("Import finished!")
 	log.Print(pp.im.Stats())
