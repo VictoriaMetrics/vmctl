@@ -80,6 +80,7 @@ func main() {
 						Concurrency: uint8(c.Int(vmConcurrency)),
 						Compress:    c.Bool(vmCompress),
 						AccountID:   c.Int(vmAccountID),
+						BatchSize:   c.Int(vmBatchSize),
 					}
 					importer, err := vm.NewImporter(vmCfg)
 					if err != nil {
