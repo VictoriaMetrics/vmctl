@@ -45,7 +45,6 @@ type Importer struct {
 	addr       string
 	importPath string
 	compress   bool
-	batchSize  int
 	user       string
 	password   string
 
@@ -56,7 +55,13 @@ type Importer struct {
 	wg   sync.WaitGroup
 	once sync.Once
 
-	s stats
+	s *stats
+}
+
+func (im *Importer) ResetStats() {
+	im.s = &stats{
+		startTime: time.Now(),
+	}
 }
 
 func (im *Importer) Stats() string {
@@ -103,7 +108,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 			im.startWorker(cfg.BatchSize)
 		}()
 	}
-
+	im.ResetStats()
 	return im, nil
 }
 
@@ -137,7 +142,7 @@ func (im *Importer) Close() {
 func (im *Importer) startWorker(batchSize int) {
 	var batch []*TimeSeries
 	var dataPoints int
-	waitForBatch := time.Now()
+	var waitForBatch time.Time
 	for {
 		select {
 		case <-im.close:
@@ -149,6 +154,11 @@ func (im *Importer) startWorker(batchSize int) {
 			}
 			return
 		case ts := <-im.input:
+			// init waitForBatch when first
+			// value was received
+			if waitForBatch.IsZero() {
+				waitForBatch = time.Now()
+			}
 			batch = append(batch, ts)
 			dataPoints += len(ts.Values)
 			if dataPoints < batchSize {

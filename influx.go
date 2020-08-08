@@ -47,6 +47,7 @@ func (ip *influxProcessor) run(silent bool) error {
 	bar := pb.StartNew(len(series))
 	seriesCh := make(chan *influx.Series)
 	errCh := make(chan error)
+	ip.im.ResetStats()
 
 	var wg sync.WaitGroup
 	wg.Add(ip.cc)

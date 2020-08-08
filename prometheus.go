@@ -41,6 +41,7 @@ func (pp *prometheusProcessor) run(silent bool) error {
 	bar := pb.StartNew(len(blocks))
 	blockReadersCh := make(chan tsdb.BlockReader)
 	errCh := make(chan error, pp.cc)
+	pp.im.ResetStats()
 
 	var wg sync.WaitGroup
 	wg.Add(pp.cc)
@@ -117,6 +118,7 @@ func (pp *prometheusProcessor) do(b tsdb.BlockReader) error {
 		for it.Next() {
 			t, v := it.At()
 			timestamps = append(timestamps, t)
+			//values = append(values, decimal.Round(v, 4))
 			values = append(values, v)
 		}
 		if it.Err() != nil {

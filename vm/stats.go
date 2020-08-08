@@ -21,14 +21,14 @@ func (s *stats) String() string {
 	s.Lock()
 	defer s.Unlock()
 
-	importDurationS := s.importDuration.Seconds()
+	totalImportDurationS := time.Since(s.startTime).Seconds()
 	var samplesPerS float64
-	if s.samples > 0 && importDurationS > 0 {
-		samplesPerS = float64(s.samples) / importDurationS
+	if s.samples > 0 && totalImportDurationS > 0 {
+		samplesPerS = float64(s.samples) / totalImportDurationS
 	}
 	bytesPerS := byteCountSI(0)
-	if s.bytes > 0 && importDurationS > 0 {
-		bytesPerS = byteCountSI(int64(float64(s.bytes) / importDurationS))
+	if s.bytes > 0 && totalImportDurationS > 0 {
+		bytesPerS = byteCountSI(int64(float64(s.bytes) / totalImportDurationS))
 	}
 
 	return fmt.Sprintf("VictoriaMetrics importer stats:\n"+
