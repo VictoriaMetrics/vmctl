@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/VictoriaMetrics/VictoriaMetrics/lib/decimal"
 )
 
 // Config contains list of params to configure
@@ -36,6 +38,10 @@ type Config struct {
 	User string
 	// Password for basic auth
 	Password string
+	// DecimalPlaces defines the number of significant decimal places to leave
+	// in metric values before importing.
+	// Zero value saves all the significant decimal places
+	DecimalPlaces int
 }
 
 // Importer performs insertion of timeseries
@@ -105,7 +111,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 	for i := 0; i < int(cfg.Concurrency); i++ {
 		go func() {
 			defer im.wg.Done()
-			im.startWorker(cfg.BatchSize)
+			im.startWorker(cfg.BatchSize, cfg.DecimalPlaces)
 		}()
 	}
 	im.ResetStats()
@@ -139,7 +145,7 @@ func (im *Importer) Close() {
 	})
 }
 
-func (im *Importer) startWorker(batchSize int) {
+func (im *Importer) startWorker(batchSize, decimalPlaces int) {
 	var batch []*TimeSeries
 	var dataPoints int
 	var waitForBatch time.Time
@@ -159,6 +165,14 @@ func (im *Importer) startWorker(batchSize int) {
 			if waitForBatch.IsZero() {
 				waitForBatch = time.Now()
 			}
+
+			if decimalPlaces > 0 {
+				// Round values according to decimalPlaces
+				for i, v := range ts.Values {
+					ts.Values[i] = decimal.Round(v, decimalPlaces)
+				}
+			}
+
 			batch = append(batch, ts)
 			dataPoints += len(ts.Values)
 			if dataPoints < batchSize {

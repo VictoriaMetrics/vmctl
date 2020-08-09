@@ -113,12 +113,11 @@ func (pp *prometheusProcessor) do(b tsdb.BlockReader) error {
 		}
 
 		var timestamps []int64
-		var values []interface{}
+		var values []float64
 		it := series.Iterator()
 		for it.Next() {
 			t, v := it.At()
 			timestamps = append(timestamps, t)
-			//values = append(values, decimal.Round(v, 4))
 			values = append(values, v)
 		}
 		if it.Err() != nil {

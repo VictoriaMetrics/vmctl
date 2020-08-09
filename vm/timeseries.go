@@ -9,7 +9,7 @@ type TimeSeries struct {
 	Name       string
 	LabelPairs []LabelPair
 	Timestamps []int64
-	Values     []interface{}
+	Values     []float64
 }
 
 type LabelPair struct {

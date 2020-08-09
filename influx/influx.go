@@ -190,7 +190,7 @@ func (cr *ChunkedResponse) Close() error {
 
 // Next reads the next part/chunk of time series.
 // Returns io.EOF when time series was read entirely.
-func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
+func (cr *ChunkedResponse) Next() ([]int64, []float64, error) {
 	resp, err := cr.cr.NextResponse()
 	if err != nil {
 		return nil, nil, err
@@ -216,9 +216,18 @@ func (cr *ChunkedResponse) Next() ([]int64, []interface{}, error) {
 		return nil, nil, fmt.Errorf("response doesn't contain field %q", key)
 	}
 
-	values, ok := r.values[cr.field]
+	fieldValues, ok := r.values[cr.field]
 	if !ok {
 		return nil, nil, fmt.Errorf("response doesn't contain filed %q", cr.field)
+	}
+	values := make([]float64, len(fieldValues))
+	for i, fv := range fieldValues {
+		v, err := toFloat64(fv)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to convert value %q.%v to float64: %s",
+				cr.field, v, err)
+		}
+		values[i] = v
 	}
 
 	ts := make([]int64, len(results[0].values[key]))

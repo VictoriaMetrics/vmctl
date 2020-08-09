@@ -48,14 +48,7 @@ func main() {
 						return fmt.Errorf("failed to create influx client: %s", err)
 					}
 
-					vmCfg := vm.Config{
-						Addr:        c.String(vmAddr),
-						User:        c.String(vmUser),
-						Password:    c.String(vmPassword),
-						Concurrency: uint8(c.Int(vmConcurrency)),
-						Compress:    c.Bool(vmCompress),
-						AccountID:   c.Int(vmAccountID),
-					}
+					vmCfg := initConfigVM(c)
 					importer, err := vm.NewImporter(vmCfg)
 					if err != nil {
 						return fmt.Errorf("failed to create VM importer: %s", err)
@@ -73,19 +66,12 @@ func main() {
 				Action: func(c *cli.Context) error {
 					fmt.Println("Prometheus import mode")
 
-					vmCfg := vm.Config{
-						Addr:        c.String(vmAddr),
-						User:        c.String(vmUser),
-						Password:    c.String(vmPassword),
-						Concurrency: uint8(c.Int(vmConcurrency)),
-						Compress:    c.Bool(vmCompress),
-						AccountID:   c.Int(vmAccountID),
-						BatchSize:   c.Int(vmBatchSize),
-					}
+					vmCfg := initConfigVM(c)
 					importer, err := vm.NewImporter(vmCfg)
 					if err != nil {
 						return fmt.Errorf("failed to create VM importer: %s", err)
 					}
+
 					promCfg := prometheus.Config{
 						Snapshot: c.String(promSnapshot),
 						Filter: prometheus.Filter{
@@ -123,4 +109,17 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("Total time: %v\n", time.Since(start))
+}
+
+func initConfigVM(c *cli.Context) vm.Config {
+	return vm.Config{
+		Addr:          c.String(vmAddr),
+		User:          c.String(vmUser),
+		Password:      c.String(vmPassword),
+		Concurrency:   uint8(c.Int(vmConcurrency)),
+		Compress:      c.Bool(vmCompress),
+		AccountID:     c.Int(vmAccountID),
+		BatchSize:     c.Int(vmBatchSize),
+		DecimalPlaces: c.Int(vmDecimalPlaces),
+	}
 }
