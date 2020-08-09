@@ -3,6 +3,7 @@ module github.com/victoriametrics/vmctl
 go 1.13
 
 require (
+	github.com/VictoriaMetrics/VictoriaMetrics v1.39.3
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cheggaaa/pb/v3 v3.0.4
 	github.com/golang/protobuf v1.4.2 // indirect

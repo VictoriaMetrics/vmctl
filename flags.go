@@ -20,13 +20,14 @@ var (
 )
 
 const (
-	vmAddr        = "vm-addr"
-	vmUser        = "vm-user"
-	vmPassword    = "vm-password"
-	vmAccountID   = "vm-account-id"
-	vmConcurrency = "vm-concurrency"
-	vmCompress    = "vm-compress"
-	vmBatchSize   = "vm-batch-size"
+	vmAddr          = "vm-addr"
+	vmUser          = "vm-user"
+	vmPassword      = "vm-password"
+	vmAccountID     = "vm-account-id"
+	vmConcurrency   = "vm-concurrency"
+	vmCompress      = "vm-compress"
+	vmBatchSize     = "vm-batch-size"
+	vmDecimalPlaces = "vm-decimal-places"
 )
 
 var (
@@ -67,6 +68,13 @@ var (
 			Name:  vmBatchSize,
 			Value: 200e3,
 			Usage: "How many samples importer collects before sending the import request to VM",
+		},
+		&cli.IntFlag{
+			Name:  vmDecimalPlaces,
+			Value: 0,
+			Usage: "The number of significant decimal places to leave in metric values before importing. " +
+				"See https://en.wikipedia.org/wiki/Significant_figures. Zero value saves all the significant decimal places. " +
+				"This option may be used for increasing on-disk compression level for the stored metrics",
 		},
 	}
 )
