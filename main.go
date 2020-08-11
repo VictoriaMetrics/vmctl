@@ -14,14 +14,18 @@ import (
 	"github.com/victoriametrics/vmctl/vm"
 )
 
-const version = "0.0.2"
+var (
+	buildTag      = "unknown"
+	buildRevision = "unknown"
+	buildTime     = "unknown"
+)
 
 func main() {
 	start := time.Now()
 	app := &cli.App{
 		Name:    "vmctl",
 		Usage:   "Victoria metrics command-line tool",
-		Version: version,
+		Version: fmt.Sprintf("%s, rev. %s, built at %s", buildTag, buildRevision, buildTime),
 		Commands: []*cli.Command{
 			{
 				Name:  "influx",
