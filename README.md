@@ -98,7 +98,7 @@ Found 40000 timeseries to import. Continue? [Y/n] y
 40000 / 40000 [-----------------------------------------------------------------------------------------------------------------------------------------------] 100.00% 21 p/s
 2020/01/18 21:19:00 Import finished!
 2020/01/18 21:19:00 VictoriaMetrics importer stats:
-  time spent while waiting: 13m51.461434876s;
+  idle duration: 13m51.461434876s;
   time spent while importing: 17m56.923899847s;
   total samples: 345600000;
   samples/s: 320914.04;
@@ -230,7 +230,7 @@ Found 14 blocks to import. Continue? [Y/n] y
 14 / 14 [-------------------------------------------------------------------------------------------] 100.00% 0 p/s
 2020/02/23 15:50:03 Import finished!
 2020/02/23 15:50:03 VictoriaMetrics importer stats:
-  time spent while waiting: 6.152953029s;
+  idle duration: 6.152953029s;
   time spent while importing: 44.908522491s;
   total samples: 32549106;
   samples/s: 724786.84;
@@ -298,7 +298,7 @@ Found 2 blocks to import. Continue? [Y/n] y
 14 / 14 [------------------------------------------------------------------------------------------------------------------------------------------------------] 100.00% ? p/s
 2020/02/23 15:51:07 Import finished!
 2020/02/23 15:51:07 VictoriaMetrics importer stats:
-  time spent while waiting: 0s;
+  idle duration: 0s;
   time spent while importing: 37.415461ms;
   total samples: 10128;
   samples/s: 270690.24;
@@ -381,15 +381,16 @@ than 4 chunks before sending the request.
 
 After successful import `vmctl` prints some statistics for details. 
 The important numbers to watch are following:
- - `time spent while waiting` - how much time importer spent while waiting for data from
- InfluxDB/Prometheus and grouping it into batches. This value may tell if InfluxDB fetches 
- were slow which probably may be improved by increasing `--<mode>-concurrency`.
- - `time spent while importing` - how much time importer spent while serializing data
- and executing import requests. The high number comparing to `time spent while waiting`
- may be a sign of VM being overloaded by import requests or other clients.
+ - `idle duration` - shows time that importer spent while waiting for data from InfluxDB/Prometheus 
+to fill up `--vm-batch-size` batch size. Value shows total duration across all workers configured
+via `--vm-concurrency`. High value may be a sign of too slow InfluxDB/Prometheus fetches or too
+high `--vm-concurrency` value. Try to improve it by increasing `--<mode>-concurrency` value or 
+decreasing `--vm-concurrency` value.
 - `import requests` - shows how many import requests were issued to VM server.
 The import request is issued once the batch size(`--vm-batch-size`) is full and ready to be sent.
 Please prefer big batch sizes (50k-500k) to improve performance.
+- `import requests retries` - shows number of unsuccessful import requests. Non-zero value may be
+a sign of network issues or VM being overloaded. See the logs during import for error messages.
 
 ### Silent mode
 

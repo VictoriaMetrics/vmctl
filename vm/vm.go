@@ -247,8 +247,6 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 		return nil
 	}
 
-	start := time.Now()
-
 	pr, pw := io.Pipe()
 	req, err := http.NewRequest("POST", im.importPath, pr)
 	if err != nil {
@@ -308,7 +306,6 @@ func (im *Importer) Import(tsBatch []*TimeSeries) error {
 	im.s.bytes += uint64(totalBytes)
 	im.s.samples += uint64(totalSamples)
 	im.s.requests++
-	im.s.importDuration += time.Since(start)
 	im.s.Unlock()
 
 	return nil
