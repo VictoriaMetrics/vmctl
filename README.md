@@ -401,15 +401,15 @@ behavior and no user interaction required - pass `-s` flag to enable "silence" m
 
 ### Decimal places
 
-`vmctl` allows to limit number of [significant decimal places](https://en.wikipedia.org/wiki/Significant_figures)
+`vmctl` allows to limit the number of [significant decimal places](https://en.wikipedia.org/wiki/Significant_figures)
 before importing. For example, average value for response size is `102.342305` bytes and it has 9 significant figures.
 If you ask a human to pronounce this value then with high probability value will be rounded to first 4 or 5 significant 
 figures because the rest aren't really that important to mention. In most of cases, such high precision is too much. 
-Moreover, such values may be just result of [floating point arithmetic](https://en.wikipedia.org/wiki/Floating-point_arithmetic), 
+Moreover, such values may be just a result of [floating point arithmetic](https://en.wikipedia.org/wiki/Floating-point_arithmetic), 
 create a [false precision](https://en.wikipedia.org/wiki/False_precision) and result into bad compression ratio 
 according to [information theory](https://en.wikipedia.org/wiki/Information_theory). 
 
-The `--vm-decimal-places` flag allows to limit number of significant figures. It takes no effect if set to 0 (by default),
+The `--vm-decimal-places` flag allows to limit the number of significant figures. It takes no effect if set to 0 (by default),
 but set `--vm-decimal-places=5` and `102.342305` will be rounded to `102.34`. Such value will have much higher compression
 ratio comparing to previous one and will save some extra disk space after migration. The most common case for using
 this flag is to reduce number of significant figures for timeseries storing aggregation results such as `average`,
