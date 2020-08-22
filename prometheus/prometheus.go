@@ -80,8 +80,10 @@ func (c *Client) Explore() ([]tsdb.BlockReader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch blocks: %s", err)
 	}
-
-	s := &Stats{}
+	s := &Stats{
+		Filtered: c.filter.min != 0 || c.filter.max != 0 || c.filter.label != "",
+	}
+	var blocksToImport []tsdb.BlockReader
 	for _, block := range blocks {
 		meta := block.Meta()
 		if !c.filter.inRange(meta.MinTime, meta.MaxTime) {
@@ -97,9 +99,10 @@ func (c *Client) Explore() ([]tsdb.BlockReader, error) {
 		s.Blocks++
 		s.Samples += meta.Stats.NumSamples
 		s.Series += meta.Stats.NumSeries
+		blocksToImport = append(blocksToImport, block)
 	}
 	fmt.Println(s)
-	return blocks, nil
+	return blocksToImport, nil
 }
 
 // Read reads the given BlockReader according to configured
