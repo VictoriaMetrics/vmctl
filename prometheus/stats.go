@@ -6,6 +6,7 @@ import (
 )
 
 type Stats struct {
+	Filtered      bool
 	MinTime       int64
 	MaxTime       int64
 	Samples       uint64
@@ -15,16 +16,21 @@ type Stats struct {
 }
 
 func (s Stats) String() string {
-	return fmt.Sprintf("Prometheus snapshot stats:\n"+
+	str := fmt.Sprintf("Prometheus snapshot stats:\n"+
 		"  blocks found: %d;\n"+
-		"  blocks skipped: %d;\n"+
+		"  blocks skipped by time filter: %d;\n"+
 		"  min time: %d (%v);\n"+
 		"  max time: %d (%v);\n"+
 		"  samples: %d;\n"+
-		"  series: %d.\n"+
-		"Filter is not taken into account for series and samples numbers.",
+		"  series: %d.",
 		s.Blocks, s.SkippedBlocks,
 		s.MinTime, time.Unix(s.MinTime/1e3, 0).Format(time.RFC3339),
 		s.MaxTime, time.Unix(s.MaxTime/1e3, 0).Format(time.RFC3339),
 		s.Samples, s.Series)
+
+	if s.Filtered {
+		str += "\n* Stats numbers are based on blocks meta info and doesn't account for applied filters."
+	}
+
+	return str
 }
