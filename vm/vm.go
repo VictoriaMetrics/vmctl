@@ -38,10 +38,10 @@ type Config struct {
 	User string
 	// Password for basic auth
 	Password string
-	// DecimalPlaces defines the number of significant decimal places to leave
+	// SignificantFigures defines the number of significant figures to leave
 	// in metric values before importing.
 	// Zero value saves all the significant decimal places
-	DecimalPlaces int
+	SignificantFigures int
 }
 
 // Importer performs insertion of timeseries
@@ -111,7 +111,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 	for i := 0; i < int(cfg.Concurrency); i++ {
 		go func() {
 			defer im.wg.Done()
-			im.startWorker(cfg.BatchSize, cfg.DecimalPlaces)
+			im.startWorker(cfg.BatchSize, cfg.SignificantFigures)
 		}()
 	}
 	im.ResetStats()
@@ -145,7 +145,7 @@ func (im *Importer) Close() {
 	})
 }
 
-func (im *Importer) startWorker(batchSize, decimalPlaces int) {
+func (im *Importer) startWorker(batchSize, significantFigures int) {
 	var batch []*TimeSeries
 	var dataPoints int
 	var waitForBatch time.Time
@@ -166,10 +166,10 @@ func (im *Importer) startWorker(batchSize, decimalPlaces int) {
 				waitForBatch = time.Now()
 			}
 
-			if decimalPlaces > 0 {
-				// Round values according to decimalPlaces
+			if significantFigures > 0 {
+				// Round values according to significantFigures
 				for i, v := range ts.Values {
-					ts.Values[i] = decimal.Round(v, decimalPlaces)
+					ts.Values[i] = decimal.Round(v, significantFigures)
 				}
 			}
 
