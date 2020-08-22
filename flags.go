@@ -174,11 +174,11 @@ var (
 		},
 		&cli.StringFlag{
 			Name:  promFilterTimeStart,
-			Usage: "The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'",
+			Usage: "The time filter in RFC3339 format to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'",
 		},
 		&cli.StringFlag{
 			Name:  promFilterTimeEnd,
-			Usage: "The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'",
+			Usage: "The time filter in RFC3339 format to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'",
 		},
 		&cli.StringFlag{
 			Name:  promFilterLabel,

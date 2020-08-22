@@ -179,8 +179,8 @@ USAGE:
 OPTIONS:
    --prom-snapshot value            Path to Prometheus snapshot. Pls see for details https://www.robustperception.io/taking-snapshots-of-prometheus-data
    --prom-concurrency value         Number of concurrently running snapshot readers (default: 1)
-   --prom-filter-time-start value   The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
-   --prom-filter-time-end value     The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
+   --prom-filter-time-start value   The time filter in RFC3339 format to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
+   --prom-filter-time-end value     The time filter in RFC3339 format to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
    --prom-filter-label value        Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.
    --prom-filter-label-value value  Prometheus regular expression to filter label from "prom-filter-label" flag. (default: ".*")
    --vm-addr vmctl                  VictoriaMetrics address to perform import requests. 
@@ -254,8 +254,8 @@ The configuration flags should contain self-explanatory descriptions.
 
 The filtering consists of three parts: by timeseries and time.
 
-Filtering by time may be configured with flags `--prom-filter-time-start` and `--prom-filter-time-end`.
-This filter applied twice: to drop blocks out of range and to filter timeseries in blocks with
+Filtering by time may be configured via flags `--prom-filter-time-start` and `--prom-filter-time-end`
+in in RFC3339 format. This filter applied twice: to drop blocks out of range and to filter timeseries in blocks with
 overlapping time range.
 
 Example of applying time filter:
