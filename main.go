@@ -117,13 +117,13 @@ func main() {
 
 func initConfigVM(c *cli.Context) vm.Config {
 	return vm.Config{
-		Addr:          c.String(vmAddr),
-		User:          c.String(vmUser),
-		Password:      c.String(vmPassword),
-		Concurrency:   uint8(c.Int(vmConcurrency)),
-		Compress:      c.Bool(vmCompress),
-		AccountID:     c.Int(vmAccountID),
-		BatchSize:     c.Int(vmBatchSize),
-		DecimalPlaces: c.Int(vmDecimalPlaces),
+		Addr:               c.String(vmAddr),
+		User:               c.String(vmUser),
+		Password:           c.String(vmPassword),
+		Concurrency:        uint8(c.Int(vmConcurrency)),
+		Compress:           c.Bool(vmCompress),
+		AccountID:          c.Int(vmAccountID),
+		BatchSize:          c.Int(vmBatchSize),
+		SignificantFigures: c.Int(vmSignificantFigures),
 	}
 }

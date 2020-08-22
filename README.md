@@ -68,7 +68,7 @@ Please note, that vmctl performs initial readiness check for the given address b
    --vm-concurrency value                      Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                               Whether to apply gzip compression to import requests (default: true)
    --vm-batch-size value                       How many samples importer collects before sending the import request to VM (default: 200000)
-   --vm-decimal-places value                   The number of significant decimal places to leave in metric values before importing. 
+   --vm-significant-figures value              The number of significant figures to leave in metric values before importing. 
 See https://en.wikipedia.org/wiki/Significant_figures. Zero value saves all the significant decimal places. 
 This option may be used for increasing on-disk compression level for the stored metrics (default: 0)
    --help, -h                                  show help (default: false)
@@ -192,7 +192,7 @@ Please note, that vmctl performs initial readiness check for the given address b
    --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                    Whether to apply gzip compression to import requests (default: true)
    --vm-batch-size value            How many samples importer collects before sending the import request to VM (default: 200000)
-   --vm-decimal-places value                   The number of significant decimal places to leave in metric values before importing. 
+   --vm-significant-figures value   The number of significant figures to leave in metric values before importing. 
 See https://en.wikipedia.org/wiki/Significant_figures. Zero value saves all the significant decimal places. 
 This option may be used for increasing on-disk compression level for the stored metrics (default: 0)
    --help, -h                       show help (default: false)
@@ -400,18 +400,18 @@ behavior and no user interaction required - pass `-s` flag to enable "silence" m
     -s Whether to run in silent mode. If set to true no confirmation prompts will appear. (default: false)
 ```
 
-### Decimal places
+### Significant figures
 
-`vmctl` allows to limit the number of [significant decimal places](https://en.wikipedia.org/wiki/Significant_figures)
-before importing. For example, average value for response size is `102.342305` bytes and it has 9 significant figures.
-If you ask a human to pronounce this value then with high probability value will be rounded to first 4 or 5 significant 
-figures because the rest aren't really that important to mention. In most of cases, such high precision is too much. 
+`vmctl` allows to limit the number of [significant figures](https://en.wikipedia.org/wiki/Significant_figures)
+before importing. For example, the average value for response size is `102.342305` bytes and it has 9 significant figures.
+If you ask a human to pronounce this value then with high probability value will be rounded to first 4 or 5 figures 
+because the rest aren't really that important to mention. In most cases, such a high precision is too much. 
 Moreover, such values may be just a result of [floating point arithmetic](https://en.wikipedia.org/wiki/Floating-point_arithmetic), 
 create a [false precision](https://en.wikipedia.org/wiki/False_precision) and result into bad compression ratio 
 according to [information theory](https://en.wikipedia.org/wiki/Information_theory). 
 
-The `--vm-decimal-places` flag allows to limit the number of significant figures. It takes no effect if set to 0 (by default),
-but set `--vm-decimal-places=5` and `102.342305` will be rounded to `102.34`. Such value will have much higher compression
-ratio comparing to previous one and will save some extra disk space after migration. The most common case for using
-this flag is to reduce number of significant figures for timeseries storing aggregation results such as `average`,
-`rate`, etc.   
+The `--vm-significant-figures` flag allows to limit the number of significant figures. It takes no effect if set 
+to 0 (by default), but set `--vm-significant-figures=5` and `102.342305` will be rounded to `102.34`. Such value will 
+have much higher compression ratio comparing to previous one and will save some extra disk space after the migration. 
+The most common case for using this flag is to reduce number of significant figures for time series storing aggregation 
+results such as `average`, `rate`, etc.   
