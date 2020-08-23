@@ -29,7 +29,7 @@ func (s Stats) String() string {
 		s.Samples, s.Series)
 
 	if s.Filtered {
-		str += "\n* Stats numbers are based on blocks meta info and doesn't account for applied filters."
+		str += "\n* Stats numbers are based on blocks meta info and don't account for applied filters."
 	}
 
 	return str

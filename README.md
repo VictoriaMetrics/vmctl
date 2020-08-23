@@ -225,7 +225,6 @@ Prometheus snapshot stats:
   max time: 1582409128139 (2020-02-22T22:05:28Z);
   samples: 32549106;
   series: 27289.
-Filter is not taken into account for series and samples numbers.
 Found 14 blocks to import. Continue? [Y/n] y
 14 / 14 [-------------------------------------------------------------------------------------------] 100.00% 0 p/s
 2020/02/23 15:50:03 Import finished!
@@ -269,7 +268,6 @@ Prometheus snapshot stats:
   max time: 1581328800000 (2020-02-10T10:00:00Z);
   samples: 1657698;
   series: 3930.
-Filter is not taken into account for series and samples numbers.
 Found 2 blocks to import. Continue? [Y/n] y
 ```
 
@@ -293,7 +291,6 @@ Prometheus snapshot stats:
   max time: 1581328800000 (2020-02-10T10:00:00Z);
   samples: 1657698;
   series: 3930.
-Filter is not taken into account for series and samples numbers.
 Found 2 blocks to import. Continue? [Y/n] y
 14 / 14 [------------------------------------------------------------------------------------------------------------------------------------------------------] 100.00% ? p/s
 2020/02/23 15:51:07 Import finished!
