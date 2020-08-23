@@ -82,6 +82,7 @@ func (c *Client) Explore() ([]tsdb.BlockReader, error) {
 	}
 	s := &Stats{
 		Filtered: c.filter.min != 0 || c.filter.max != 0 || c.filter.label != "",
+		Blocks:   len(blocks),
 	}
 	var blocksToImport []tsdb.BlockReader
 	for _, block := range blocks {
@@ -96,7 +97,6 @@ func (c *Client) Explore() ([]tsdb.BlockReader, error) {
 		if s.MaxTime == 0 || meta.MaxTime > s.MaxTime {
 			s.MaxTime = meta.MaxTime
 		}
-		s.Blocks++
 		s.Samples += meta.Stats.NumSamples
 		s.Series += meta.Stats.NumSeries
 		blocksToImport = append(blocksToImport, block)
