@@ -9,6 +9,7 @@ Features:
 
 # Table of contents
 
+* [Articles](#articles)
 * [How to build](#how-to-build)
 * [Migrating data from InfluxDB](#migrating-data-from-influxdb)
    * [Data mapping](#data-mapping)
@@ -27,6 +28,11 @@ Features:
    * [VictoriaMetrics importer](#victoriametrics-importer)
    * [Importer stats](#importer-stats)
 
+
+## Articles
+
+* [How to migrate data from Prometheus](https://medium.com/@romanhavronenko/victoriametrics-how-to-migrate-data-from-prometheus-d44a6728f043)
+* [How to migrate data from Prometheus. Filtering and modifying time series](https://medium.com/@romanhavronenko/victoriametrics-how-to-migrate-data-from-prometheus-filtering-and-modifying-time-series-6d40cea4bf21)
 
 ## How to build
 
