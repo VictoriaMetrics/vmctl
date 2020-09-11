@@ -2,6 +2,7 @@ package vm
 
 import (
 	"bytes"
+	"math"
 	"strings"
 	"testing"
 )
@@ -54,6 +55,21 @@ func TestTimeSeries_Write(t *testing.T) {
 				},
 			},
 			exp: ``,
+		},
+		{
+			name: "inf values",
+			ts: &TimeSeries{
+				Name: "foo",
+				LabelPairs: []LabelPair{
+					{
+						Name:  "key",
+						Value: "val",
+					},
+				},
+				Timestamps: []int64{1577877162200, 1577877162200, 1577877162200},
+				Values:     []float64{0, math.Inf(-1), math.Inf(1)},
+			},
+			exp: `{"metric":{"__name__":"foo","key":"val"},"timestamps":[1577877162200,1577877162200,1577877162200],"values":[0,-Inf,+Inf]}`,
 		},
 	}
 
