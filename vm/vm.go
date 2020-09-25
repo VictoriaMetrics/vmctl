@@ -28,9 +28,9 @@ type Config struct {
 	Concurrency uint8
 	// Whether to apply gzip compression
 	Compress bool
-	// AccountID for cluster version
-	// Less than 0 assumes single node version
-	AccountID int
+	// AccountID for cluster version.
+	// Empty value assumes it is a single node version
+	AccountID string
 	// BatchSize defines how many samples
 	// importer collects before sending the import request
 	BatchSize int
@@ -83,10 +83,10 @@ func NewImporter(cfg Config) (*Importer, error) {
 	// if single version
 	// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/master#how-to-import-time-series-data
 	importPath := addr + "/api/v1/import"
-	if cfg.AccountID != -1 {
+	if cfg.AccountID != "" {
 		// if cluster version
 		// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster#url-format
-		importPath = fmt.Sprintf("%s/insert/%d/prometheus/api/v1/import", addr, uint32(cfg.AccountID))
+		importPath = fmt.Sprintf("%s/insert/%s/prometheus/api/v1/import", addr, cfg.AccountID)
 	}
 
 	im := &Importer{

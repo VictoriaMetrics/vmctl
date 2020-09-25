@@ -49,10 +49,11 @@ var (
 			Usage:   "VictoriaMetrics password for basic auth",
 			EnvVars: []string{"VM_PASSWORD"},
 		},
-		&cli.IntFlag{
-			Name:  vmAccountID,
-			Value: -1,
-			Usage: "Account(tenant) ID - is required for cluster VM.",
+		&cli.StringFlag{
+			Name: vmAccountID,
+			Usage: "AccountID is an arbitrary 32-bit integer identifying namespace for data ingestion (aka tenant). \n" +
+				"It is possible to set it as accountID:projectID, where projectID is also arbitrary 32-bit integer. \n" +
+				"If projectID isn't set, then it equals to 0",
 		},
 		&cli.UintFlag{
 			Name:  vmConcurrency,

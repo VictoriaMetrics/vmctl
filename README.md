@@ -70,7 +70,9 @@ Should be the same as --httpListenAddr value for single-node version or VMInsert
 Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
    --vm-user value                             VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value                         VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value                       Account(tenant) ID - is required for cluster VM. (default: -1)
+   --vm-account-id value                       AccountID is an arbitrary 32-bit integer identifying namespace for data ingestion (aka tenant). 
+It is possible to set it as accountID:projectID, where projectID is also arbitrary 32-bit integer. 
+If projectID isn't set, then it equals to 0
    --vm-concurrency value                      Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                               Whether to apply gzip compression to import requests (default: true)
    --vm-batch-size value                       How many samples importer collects before sending the import request to VM (default: 200000)
@@ -194,7 +196,9 @@ Should be the same as --httpListenAddr value for single-node version or VMInsert
 Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
    --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
    --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value            Account(tenant) ID - is required for cluster VM. (default: -1)
+   --vm-account-id value                       AccountID is an arbitrary 32-bit integer identifying namespace for data ingestion (aka tenant). 
+It is possible to set it as accountID:projectID, where projectID is also arbitrary 32-bit integer. 
+If projectID isn't set, then it equals to 0
    --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
    --vm-compress                    Whether to apply gzip compression to import requests (default: true)
    --vm-batch-size value            How many samples importer collects before sending the import request to VM (default: 200000)

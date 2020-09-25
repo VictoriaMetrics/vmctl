@@ -122,7 +122,7 @@ func initConfigVM(c *cli.Context) vm.Config {
 		Password:           c.String(vmPassword),
 		Concurrency:        uint8(c.Int(vmConcurrency)),
 		Compress:           c.Bool(vmCompress),
-		AccountID:          c.Int(vmAccountID),
+		AccountID:          c.String(vmAccountID),
 		BatchSize:          c.Int(vmBatchSize),
 		SignificantFigures: c.Int(vmSignificantFigures),
 	}
