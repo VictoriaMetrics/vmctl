@@ -1,6 +1,7 @@
 package influx
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,6 +38,8 @@ func parseResult(r influx.Result) ([]queryValues, error) {
 
 func toFloat64(v interface{}) (float64, error) {
 	switch i := v.(type) {
+	case json.Number:
+		return i.Float64()
 	case float64:
 		return i, nil
 	case float32:
