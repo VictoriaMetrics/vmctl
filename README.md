@@ -22,6 +22,8 @@ Features:
 * [Migrating data from Thanos](#migrating-data-from-thanos)
    * [Current data](#current-data)
    * [Historical data](#historical-data)
+* [Migrating data from VictoriaMetrics](#migrating-data-from-victoriametrix)
+   * [Native protocol](#native-protocol)
 * [Tuning](#tuning)
    * [Influx mode](#influx-mode)
    * [Prometheus mode](#prometheus-mode)
@@ -355,6 +357,65 @@ then import it into VM using `vmctl` in `prometheus` mode.
     ```
     vmctl prometheus --prom-snapshot thanos-data --vm-addr http://victoria-metrics:8428
     ```
+
+## Migrating data from VictoriaMetrics
+
+### Native protocol
+
+The [native binary protocol](https://victoriametrics.github.io/#how-to-export-data-in-native-format)
+was introduced in [1.42.0 release](https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.42.0)
+and provides the most efficient way to migrate data between VM instances: single to single, 
+single to cluster and vice versa. Please note that both instances (source and destination) should be of v1.42.0
+or higher.
+
+See `help` for details:
+```
+ ./vmctl victoriametrics-native --help
+NAME:
+   vmctl vm-native - Migrate time series between VictoriaMetrics installations via native binary format
+
+USAGE:
+   vmctl vm-native [command options] [arguments...]
+
+OPTIONS:
+   --vm-native-filter-match value  Time series selector to match series for export. For example, select {instance!="localhost"} will match all series with "instance" label different to "localhost".
+ See more details here https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-export-data-in-native-format (default: "{__name__!=\"\"}")
+   --vm-native-filter-time-start value  The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'
+   --vm-native-filter-time-end value    The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'
+   --vm-native-src-addr value           VictoriaMetrics address to perform export from. 
+ Should be the same as --httpListenAddr value for single-node version or VMSelect component. If exporting from cluster version - include the tenet token in address.
+   --vm-native-src-user value      VictoriaMetrics username for basic auth [$VM_NATIVE_SRC_USERNAME]
+   --vm-native-src-password value  VictoriaMetrics password for basic auth [$VM_NATIVE_SRC_PASSWORD]
+   --vm-native-dst-addr value      VictoriaMetrics address to perform import to. 
+ Should be the same as --httpListenAddr value for single-node version or VMInsert component. If importing into cluster version - include the tenet token in address.
+   --vm-native-dst-user value      VictoriaMetrics username for basic auth [$VM_NATIVE_DST_USERNAME]
+   --vm-native-dst-password value  VictoriaMetrics password for basic auth [$VM_NATIVE_DST_PASSWORD]
+```
+
+In this mode `vmctl` acts as a proxy between two VM instances, where time series filtering is done by "source" (`src`) 
+and processing is done by "destination" (`dst`). Because of that, `vmctl` doesn't actually know how much data will be 
+processed and can't show the progress bar. It will show the current processing speed and total number of processed bytes:
+
+```
+./vmctl vm-native --vm-native-src-addr=http://localhost:8528  --vm-native-dst-addr=http://localhost:8428 --vm-native-filter-match='{job="vmagent"}'
+VictoriaMetrics Native import mode
+Initing export pipe from "http://localhost:8528" with filters: 
+        filter: match[]={job="vmagent"}
+Initing import process to "http://localhost:8428":
+Total: 336.75 KiB ↖ Speed: 454.46 KiB p/s                                                                                                               
+2020/10/13 17:04:59 Total time: 952.143376ms
+``` 
+
+Importing tips:
+1. Migrating all the metrics from one VM to another may collide with existing application metrics 
+(prefixed with `vm_`) at destination and lead to confusion when using 
+[official Grafana dashboards](https://grafana.com/orgs/victoriametrics/dashboards). 
+To avoid such situation try to filter out VM process metrics via `--vm-native-filter-match` flag.
+2. Migration is a backfilling process, so it is recommended to read 
+[Backfilling tips](https://github.com/VictoriaMetrics/VictoriaMetrics#backfilling) section.
+3. `vmctl` doesn't provide relabeling or other types of labels management in this mode.
+Instead, use [relabeling in VictoriaMetrics](https://github.com/VictoriaMetrics/vmctl/issues/4#issuecomment-683424375).
+
 
 ## Tuning
 
