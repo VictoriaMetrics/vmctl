@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -95,6 +96,37 @@ func main() {
 						cc: c.Int(promConcurrency),
 					}
 					return pp.run(c.Bool(globalSilent))
+				},
+			},
+			{
+				Name:  "vm-native",
+				Usage: "Migrate time series between VictoriaMetrics installations via native binary format",
+				Flags: vmNativeFlags,
+				Action: func(c *cli.Context) error {
+					fmt.Println("VictoriaMetrics Native import mode")
+
+					if c.String(vmNativeFilterMatch) == "" {
+						return fmt.Errorf("flag %q can't be empty", vmNativeFilterMatch)
+					}
+
+					p := vmNativeProcessor{
+						filter: filter{
+							match:     c.String(vmNativeFilterMatch),
+							timeStart: c.String(vmNativeFilterTimeStart),
+							timeEnd:   c.String(vmNativeFilterTimeEnd),
+						},
+						src: &vmNativeClient{
+							addr:     strings.Trim(c.String(vmNativeSrcAddr), "/"),
+							user:     c.String(vmNativeSrcUser),
+							password: c.String(vmNativeSrcPassword),
+						},
+						dst: &vmNativeClient{
+							addr:     strings.Trim(c.String(vmNativeDstAddr), "/"),
+							user:     c.String(vmNativeDstUser),
+							password: c.String(vmNativeDstPassword),
+						},
+					}
+					return p.run()
 				},
 			},
 		},

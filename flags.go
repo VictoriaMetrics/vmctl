@@ -193,6 +193,74 @@ var (
 	}
 )
 
+const (
+	vmNativeFilterMatch     = "vm-native-filter-match"
+	vmNativeFilterTimeStart = "vm-native-filter-time-start"
+	vmNativeFilterTimeEnd   = "vm-native-filter-time-end"
+
+	vmNativeSrcAddr     = "vm-native-src-addr"
+	vmNativeSrcUser     = "vm-native-src-user"
+	vmNativeSrcPassword = "vm-native-src-password"
+
+	vmNativeDstAddr     = "vm-native-dst-addr"
+	vmNativeDstUser     = "vm-native-dst-user"
+	vmNativeDstPassword = "vm-native-dst-password"
+)
+
+var (
+	vmNativeFlags = []cli.Flag{
+		&cli.StringFlag{
+			Name: vmNativeFilterMatch,
+			Usage: "Time series selector to match series for export. For example, select {instance!=\"localhost\"} will " +
+				"match all series with \"instance\" label different to \"localhost\".\n" +
+				" See more details here https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-export-data-in-native-format",
+			Value: `{__name__!=""}`,
+		},
+		&cli.StringFlag{
+			Name:  vmNativeFilterTimeStart,
+			Usage: "The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name:  vmNativeFilterTimeEnd,
+			Usage: "The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'",
+		},
+		&cli.StringFlag{
+			Name: vmNativeSrcAddr,
+			Usage: "VictoriaMetrics address to perform export from. \n" +
+				" Should be the same as --httpListenAddr value for single-node version or VMSelect component." +
+				" If exporting from cluster version - include the tenet token in address.",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    vmNativeSrcUser,
+			Usage:   "VictoriaMetrics username for basic auth",
+			EnvVars: []string{"VM_NATIVE_SRC_USERNAME"},
+		},
+		&cli.StringFlag{
+			Name:    vmNativeSrcPassword,
+			Usage:   "VictoriaMetrics password for basic auth",
+			EnvVars: []string{"VM_NATIVE_SRC_PASSWORD"},
+		},
+		&cli.StringFlag{
+			Name: vmNativeDstAddr,
+			Usage: "VictoriaMetrics address to perform import to. \n" +
+				" Should be the same as --httpListenAddr value for single-node version or VMInsert component." +
+				" If importing into cluster version - include the tenet token in address.",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    vmNativeDstUser,
+			Usage:   "VictoriaMetrics username for basic auth",
+			EnvVars: []string{"VM_NATIVE_DST_USERNAME"},
+		},
+		&cli.StringFlag{
+			Name:    vmNativeDstPassword,
+			Usage:   "VictoriaMetrics password for basic auth",
+			EnvVars: []string{"VM_NATIVE_DST_PASSWORD"},
+		},
+	}
+)
+
 func mergeFlags(flags ...[]cli.Flag) []cli.Flag {
 	var result []cli.Flag
 	for _, f := range flags {
