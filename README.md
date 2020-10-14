@@ -22,7 +22,7 @@ Features:
 * [Migrating data from Thanos](#migrating-data-from-thanos)
    * [Current data](#current-data)
    * [Historical data](#historical-data)
-* [Migrating data from VictoriaMetrics](#migrating-data-from-victoriametrix)
+* [Migrating data from VictoriaMetrics](#migrating-data-from-victoriametrics)
    * [Native protocol](#native-protocol)
 * [Tuning](#tuning)
    * [Influx mode](#influx-mode)
