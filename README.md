@@ -370,7 +370,7 @@ or higher.
 
 See `help` for details:
 ```
- ./vmctl victoriametrics-native --help
+ ./vmctl vm-native --help
 NAME:
    vmctl vm-native - Migrate time series between VictoriaMetrics installations via native binary format
 
