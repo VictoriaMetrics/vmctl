@@ -223,7 +223,10 @@ if flags `--prom-filter-time-start` or `--prom-filter-time-end` were set. The ex
 Please note that stats are not taking into account timeseries or samples filtering. This will be done during importing process.
  
 The importing process takes the snapshot blocks revealed from Explore procedure and processes them one by one
-accumulating timeseries and samples. The data processed in chunks and then sent to VM. 
+accumulating timeseries and samples. Please note, that `vmctl` relies on responses from Influx on this stage,
+so ensure that Explore queries are executed without errors or limits. Please see this 
+[issue](https://github.com/VictoriaMetrics/vmctl/issues/30) for details.
+The data processed in chunks and then sent to VM.
 
 The importing process example for local installation of Prometheus 
 and single-node VictoriaMetrics(`http://localhost:8428`):
