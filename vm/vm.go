@@ -42,7 +42,7 @@ type Config struct {
 	// in metric values before importing.
 	// Zero value saves all the significant decimal places
 	SignificantFigures int
-	// ExtraLabels
+	// ExtraLabels that will be added to all imported series. Must be in label=value format.
 	ExtraLabels []string
 }
 
@@ -76,16 +76,17 @@ func (im *Importer) Stats() string {
 	return im.s.String()
 }
 
-func AddExtraLabelsToImportPath(path string, extraLabels []string)(string,error){
+// AddExtraLabelsToImportPath - adds extra labels query params to given url path.
+func AddExtraLabelsToImportPath(path string, extraLabels []string) (string, error) {
 	separator := "?"
-	for _, extraLabel := range extraLabels{
-		if !strings.Contains(extraLabel,"="){
-			return path, fmt.Errorf("bad format for extra_label flag, it must be `key=value`, got: %q",extraLabel)
+	for _, extraLabel := range extraLabels {
+		if !strings.Contains(extraLabel, "=") {
+			return path, fmt.Errorf("bad format for extra_label flag, it must be `key=value`, got: %q", extraLabel)
 		}
-		if strings.Contains(path,"?"){
+		if strings.Contains(path, "?") {
 			separator = "&"
 		}
-		path += fmt.Sprintf("%sextra_label=%s",separator, extraLabel)
+		path += fmt.Sprintf("%sextra_label=%s", separator, extraLabel)
 	}
 	return path, nil
 }
@@ -104,7 +105,7 @@ func NewImporter(cfg Config) (*Importer, error) {
 		// see https://github.com/VictoriaMetrics/VictoriaMetrics/tree/cluster#url-format
 		importPath = fmt.Sprintf("%s/insert/%s/prometheus/api/v1/import", addr, cfg.AccountID)
 	}
-	importPath, err := AddExtraLabelsToImportPath(importPath,cfg.ExtraLabels)
+	importPath, err := AddExtraLabelsToImportPath(importPath, cfg.ExtraLabels)
 	if err != nil {
 		return nil, err
 	}

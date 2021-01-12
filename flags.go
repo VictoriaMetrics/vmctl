@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -28,7 +29,7 @@ const (
 	vmCompress           = "vm-compress"
 	vmBatchSize          = "vm-batch-size"
 	vmSignificantFigures = "vm-significant-figures"
-	vmExtraLabel = "vm-extra-label"
+	vmExtraLabel         = "vm-extra-label"
 )
 
 var (
@@ -79,7 +80,7 @@ var (
 				"This option may be used for increasing on-disk compression level for the stored metrics",
 		},
 		&cli.StringSliceFlag{
-			Name: vmExtraLabel,
+			Name:  vmExtraLabel,
 			Value: nil,
 			Usage: "Extra labels, that will be added to imported timeseries. In case of collision, label value defined by flag" +
 				"will have priority. Flag can be set multiple times, to add few additional labels.",
@@ -266,7 +267,7 @@ var (
 			EnvVars: []string{"VM_NATIVE_DST_PASSWORD"},
 		},
 		&cli.StringSliceFlag{
-			Name: vmExtraLabel,
+			Name:  vmExtraLabel,
 			Value: nil,
 			Usage: "Extra labels, that will be added to imported timeseries. In case of collision, label value defined by flag" +
 				"will have priority. Flag can be set multiple times, to add few additional labels.",
