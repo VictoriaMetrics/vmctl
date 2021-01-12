@@ -78,17 +78,18 @@ func (im *Importer) Stats() string {
 
 // AddExtraLabelsToImportPath - adds extra labels query params to given url path.
 func AddExtraLabelsToImportPath(path string, extraLabels []string) (string, error) {
+	dst := path
 	separator := "?"
 	for _, extraLabel := range extraLabels {
 		if !strings.Contains(extraLabel, "=") {
 			return path, fmt.Errorf("bad format for extra_label flag, it must be `key=value`, got: %q", extraLabel)
 		}
-		if strings.Contains(path, "?") {
+		if strings.Contains(dst, "?") {
 			separator = "&"
 		}
-		path += fmt.Sprintf("%sextra_label=%s", separator, extraLabel)
+		dst += fmt.Sprintf("%sextra_label=%s", separator, extraLabel)
 	}
-	return path, nil
+	return dst, nil
 }
 
 func NewImporter(cfg Config) (*Importer, error) {
