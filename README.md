@@ -29,7 +29,8 @@ Features:
    * [Prometheus mode](#prometheus-mode)
    * [VictoriaMetrics importer](#victoriametrics-importer)
    * [Importer stats](#importer-stats)
-* [ExtraLabels](#adding-extra-labels)
+* [Significant figures](#significant-figures)
+* [Adding extra labels](#adding-extra-labels)
 
 
 ## Articles
