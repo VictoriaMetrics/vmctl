@@ -121,9 +121,10 @@ func main() {
 							password: c.String(vmNativeSrcPassword),
 						},
 						dst: &vmNativeClient{
-							addr:     strings.Trim(c.String(vmNativeDstAddr), "/"),
-							user:     c.String(vmNativeDstUser),
-							password: c.String(vmNativeDstPassword),
+							addr:        strings.Trim(c.String(vmNativeDstAddr), "/"),
+							user:        c.String(vmNativeDstUser),
+							password:    c.String(vmNativeDstPassword),
+							extraLabels: c.StringSlice(vmExtraLabel),
 						},
 					}
 					return p.run()
@@ -157,5 +158,6 @@ func initConfigVM(c *cli.Context) vm.Config {
 		AccountID:          c.String(vmAccountID),
 		BatchSize:          c.Int(vmBatchSize),
 		SignificantFigures: c.Int(vmSignificantFigures),
+		ExtraLabels:        c.StringSlice(vmExtraLabel),
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/cheggaaa/pb/v3"
+	"github.com/victoriametrics/vmctl/vm"
 )
 
 type vmNativeProcessor struct {
@@ -18,9 +19,10 @@ type vmNativeProcessor struct {
 }
 
 type vmNativeClient struct {
-	addr     string
-	user     string
-	password string
+	addr        string
+	user        string
+	password    string
+	extraLabels []string
 }
 
 type filter struct {
@@ -57,6 +59,11 @@ func (p *vmNativeProcessor) run() error {
 	}
 
 	sync := make(chan struct{})
+	nativeImportAddr, err := vm.AddExtraLabelsToImportPath(nativeImportAddr, p.dst.extraLabels)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		defer func() { close(sync) }()
 		u := fmt.Sprintf("%s/%s", p.dst.addr, nativeImportAddr)

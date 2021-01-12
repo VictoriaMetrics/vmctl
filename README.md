@@ -29,6 +29,7 @@ Features:
    * [Prometheus mode](#prometheus-mode)
    * [VictoriaMetrics importer](#victoriametrics-importer)
    * [Importer stats](#importer-stats)
+* [ExtraLabels](#adding-extra-labels)
 
 
 ## Articles
@@ -486,3 +487,10 @@ to 0 (by default), but set `--vm-significant-figures=5` and `102.342305` will be
 have much higher compression ratio comparing to previous one and will save some extra disk space after the migration. 
 The most common case for using this flag is to reduce number of significant figures for time series storing aggregation 
 results such as `average`, `rate`, etc.   
+
+### Adding extra labels
+
+ `vmctl` allows to add extra labels to all imported series. It can be achived with flag `--vm-extra-label label=value`. 
+ If multiple labels needs to be added, set flag for each label, for example, `--vm-extra-label label1=value1 --vm-extra-label label2=value2`.
+ If timeseries already have label, that must be added with `--vm-extra-label` flag, flag has priority and will override label value from timeseries.
+ 
