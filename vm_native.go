@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/victoriametrics/vmctl/vm"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,6 +22,7 @@ type vmNativeClient struct {
 	addr     string
 	user     string
 	password string
+	extraLabels []string
 }
 
 type filter struct {
@@ -49,6 +51,7 @@ const (
 
 func (p *vmNativeProcessor) run() error {
 	pr, pw := io.Pipe()
+	fmt.Println("import start")
 
 	fmt.Printf("Initing export pipe from %q with filters: %s\n", p.src.addr, p.filter)
 	exportReader, err := p.exportPipe()
@@ -57,6 +60,12 @@ func (p *vmNativeProcessor) run() error {
 	}
 
 	sync := make(chan struct{})
+	nativeImportAddr, err := vm.AddExtraLabelsToImportPath(nativeImportAddr,p.dst.extraLabels)
+	if err != nil {
+		fmt.Printf("import erorr: %v",err)
+		return err
+	}
+
 	go func() {
 		defer func() { close(sync) }()
 		u := fmt.Sprintf("%s/%s", p.dst.addr, nativeImportAddr)

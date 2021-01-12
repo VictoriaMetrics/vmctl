@@ -15,15 +15,19 @@ Features:
    * [Data mapping](#data-mapping)
    * [Configuration](#configuration)
    * [Filtering](#filtering)
+   * [ExtraLabels](#adding-extra-labels)
 * [Migrating data from Prometheus](#migrating-data-from-prometheus)
    * [Data mapping](#data-mapping-1)
    * [Configuration](#configuration-1)
    * [Filtering](#filtering-1)
+   * [ExtraLabels](#adding-extra-labels)
 * [Migrating data from Thanos](#migrating-data-from-thanos)
    * [Current data](#current-data)
    * [Historical data](#historical-data)
+   * [ExtraLabels](#adding-extra-labels)
 * [Migrating data from VictoriaMetrics](#migrating-data-from-victoriametrics)
    * [Native protocol](#native-protocol)
+   * [ExtraLabels](#adding-extra-labels)
 * [Tuning](#tuning)
    * [Influx mode](#influx-mode)
    * [Prometheus mode](#prometheus-mode)
@@ -486,3 +490,10 @@ to 0 (by default), but set `--vm-significant-figures=5` and `102.342305` will be
 have much higher compression ratio comparing to previous one and will save some extra disk space after the migration. 
 The most common case for using this flag is to reduce number of significant figures for time series storing aggregation 
 results such as `average`, `rate`, etc.   
+
+### Adding extra labels
+
+ `vmctl` allows to add extra labels to all imported series. It can be achived with flag `--vm-extra-label label=value`. 
+ If multiple labels needs to be added, set flag for each label, for example, `--vm-extra-label label1=value1 --vm-extra-label label2=value2`.
+ If timeseries already have label, that must be added with `--vm-extra-label` flag, flag has priority and will override label value from timeseries.
+ 
