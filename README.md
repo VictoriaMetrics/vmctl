@@ -11,10 +11,11 @@ Features:
 
 * [Articles](#articles)
 * [How to build](#how-to-build)
-* [Migrating data from InfluxDB](#migrating-data-from-influxdb)
+* [Migrating data from InfluxDB 1.x](#migrating-data-from-influxdb-1x)
    * [Data mapping](#data-mapping)
    * [Configuration](#configuration)
    * [Filtering](#filtering)
+* [Migrating data from InfluxDB 2.x](#migrating-data-from-influxdb-2x)  
 * [Migrating data from Prometheus](#migrating-data-from-prometheus)
    * [Data mapping](#data-mapping-1)
    * [Configuration](#configuration-1)
@@ -44,7 +45,7 @@ Features:
 2. Run `make build` from the root folder of the repository.
    It builds `vmctl` binary and puts it into the `bin` folder.
    
-## Migrating data from InfluxDB
+## Migrating data from InfluxDB (1.x)
 
 `vmctl` supports the `influx` mode to migrate data from InfluxDB to VictoriaMetrics time-series database.
 See `help` for details:
@@ -172,6 +173,11 @@ Here's an example of importing timeseries for one day only:
 `./vmctl influx --influx-database benchmark --influx-filter-series "where hostname='host_1703'" --influx-filter-time-start "2020-01-01T10:07:00Z" --influx-filter-time-end "2020-01-01T15:07:00Z"`
 
 Please see more about time filtering [here](https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#filter-meta-queries-by-time).
+
+## Migrating data from InfluxDB (2.x)
+
+Migrating data from InfluxDB v2.x is not supported yet ([#32](https://github.com/VictoriaMetrics/vmctl/issues/32)).
+You may find useful a 3rd party solution for this - https://github.com/jonppe/influx_to_victoriametrics.
 
 
 ## Migrating data from Prometheus
