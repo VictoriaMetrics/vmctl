@@ -48,44 +48,8 @@ Features:
 ## Migrating data from InfluxDB (1.x)
 
 `vmctl` supports the `influx` mode to migrate data from InfluxDB to VictoriaMetrics time-series database.
-See `help` for details:
-```
-./vmctl influx --help
-NAME:
-   vmctl influx - Migrate timeseries from InfluxDB
 
-USAGE:
-   vmctl influx [command options] [arguments...]
-
-OPTIONS:
-   --influx-addr value              Influx server addr (default: "http://localhost:8086")
-   --influx-user value              Influx user [$INFLUX_USERNAME]
-   --influx-password value          Influx user password [$INFLUX_PASSWORD]
-   --influx-database value          Influx database
-   --influx-retention-policy value  Influx retention policy (default: "autogen")
-   --influx-chunk-size value        The chunkSize defines max amount of series to be returned in one chunk (default: 10000)
-   --influx-concurrency value       Number of concurrently running fetch queries to InfluxDB (default: 1)
-   --influx-filter-series value     Influx filter expression to select series. E.g. "from cpu where arch='x86' AND hostname='host_2753'".
-See for details https://docs.influxdata.com/influxdb/v1.7/query_language/schema_exploration#show-series
-   --influx-filter-time-start value            The time filter to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
-   --influx-filter-time-end value              The time filter to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
-   --influx-measurement-field-separator value  The {separator} symbol used to concatenate {measurement} and {field} names into series name {measurement}{separator}{field}. (default: "_")
-   --vm-addr vmctl                  VictoriaMetrics address to perform import requests. 
-Should be the same as --httpListenAddr value for single-node version or VMInsert component. 
-Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
-   --vm-user value                             VictoriaMetrics username for basic auth [$VM_USERNAME]
-   --vm-password value                         VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value                       AccountID is an arbitrary 32-bit integer identifying namespace for data ingestion (aka tenant). 
-It is possible to set it as accountID:projectID, where projectID is also arbitrary 32-bit integer. 
-If projectID isn't set, then it equals to 0
-   --vm-concurrency value                      Number of workers concurrently performing import requests to VM (default: 2)
-   --vm-compress                               Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value                       How many samples importer collects before sending the import request to VM (default: 200000)
-   --vm-significant-figures value              The number of significant figures to leave in metric values before importing. 
-See https://en.wikipedia.org/wiki/Significant_figures. Zero value saves all the significant decimal places. 
-This option may be used for increasing on-disk compression level for the stored metrics (default: 0)
-   --help, -h                                  show help (default: false)
-```
+See `./vmctl influx --help` for details.
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
 Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
@@ -185,38 +149,7 @@ You may find useful a 3rd party solution for this - https://github.com/jonppe/in
 `vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
 Migration is based on reading Prometheus snapshot, which is basically a hard-link to Prometheus data files.
 
-See `help` for details:
-```
-./vmctl prometheus --help
-NAME:
-   vmctl prometheus - Migrate timeseries from Prometheus
-
-USAGE:
-   vmctl prometheus [command options] [arguments...]
-
-OPTIONS:
-   --prom-snapshot value            Path to Prometheus snapshot. Pls see for details https://www.robustperception.io/taking-snapshots-of-prometheus-data
-   --prom-concurrency value         Number of concurrently running snapshot readers (default: 1)
-   --prom-filter-time-start value   The time filter in RFC3339 format to select timeseries with timestamp equal or higher than provided value. E.g. '2020-01-01T20:07:00Z'
-   --prom-filter-time-end value     The time filter in RFC3339 format to select timeseries with timestamp equal or lower than provided value. E.g. '2020-01-01T20:07:00Z'
-   --prom-filter-label value        Prometheus label name to filter timeseries by. E.g. '__name__' will filter timeseries by name.
-   --prom-filter-label-value value  Prometheus regular expression to filter label from "prom-filter-label" flag. (default: ".*")
-   --vm-addr vmctl                  VictoriaMetrics address to perform import requests. 
-Should be the same as --httpListenAddr value for single-node version or VMInsert component. 
-Please note, that vmctl performs initial readiness check for the given address by checking `/health` endpoint. (default: "http://localhost:8428")
-   --vm-user value                  VictoriaMetrics username for basic auth [$VM_USERNAME]
-   --vm-password value              VictoriaMetrics password for basic auth [$VM_PASSWORD]
-   --vm-account-id value                       AccountID is an arbitrary 32-bit integer identifying namespace for data ingestion (aka tenant). 
-It is possible to set it as accountID:projectID, where projectID is also arbitrary 32-bit integer. 
-If projectID isn't set, then it equals to 0
-   --vm-concurrency value           Number of workers concurrently performing import requests to VM (default: 2)
-   --vm-compress                    Whether to apply gzip compression to import requests (default: true)
-   --vm-batch-size value            How many samples importer collects before sending the import request to VM (default: 200000)
-   --vm-significant-figures value   The number of significant figures to leave in metric values before importing. 
-See https://en.wikipedia.org/wiki/Significant_figures. Zero value saves all the significant decimal places. 
-This option may be used for increasing on-disk compression level for the stored metrics (default: 0)
-   --help, -h                       show help (default: false)
-```
+See `./vmctl prometheus --help` for details.
 
 To use migration tool please specify the path to Prometheus snapshot `--prom-snapshot` and VictoriaMetrics address `--vm-addr`.
 More about Prometheus snapshots may be found [here](https://www.robustperception.io/taking-snapshots-of-prometheus-data).
@@ -379,29 +312,7 @@ and provides the most efficient way to migrate data between VM instances: single
 single to cluster and vice versa. Please note that both instances (source and destination) should be of v1.42.0
 or higher.
 
-See `help` for details:
-```
- ./vmctl vm-native --help
-NAME:
-   vmctl vm-native - Migrate time series between VictoriaMetrics installations via native binary format
-
-USAGE:
-   vmctl vm-native [command options] [arguments...]
-
-OPTIONS:
-   --vm-native-filter-match value  Time series selector to match series for export. For example, select {instance!="localhost"} will match all series with "instance" label different to "localhost".
- See more details here https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-export-data-in-native-format (default: "{__name__!=\"\"}")
-   --vm-native-filter-time-start value  The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'
-   --vm-native-filter-time-end value    The time filter may contain either unix timestamp in seconds or RFC3339 values. E.g. '2020-01-01T20:07:00Z'
-   --vm-native-src-addr value           VictoriaMetrics address to perform export from. 
- Should be the same as --httpListenAddr value for single-node version or VMSelect component. If exporting from cluster version - include the tenet token in address.
-   --vm-native-src-user value      VictoriaMetrics username for basic auth [$VM_NATIVE_SRC_USERNAME]
-   --vm-native-src-password value  VictoriaMetrics password for basic auth [$VM_NATIVE_SRC_PASSWORD]
-   --vm-native-dst-addr value      VictoriaMetrics address to perform import to. 
- Should be the same as --httpListenAddr value for single-node version or VMInsert component. If importing into cluster version - include the tenet token in address.
-   --vm-native-dst-user value      VictoriaMetrics username for basic auth [$VM_NATIVE_DST_USERNAME]
-   --vm-native-dst-password value  VictoriaMetrics password for basic auth [$VM_NATIVE_DST_PASSWORD]
-```
+See `./vmctl vm-native --help` for details.
 
 In this mode `vmctl` acts as a proxy between two VM instances, where time series filtering is done by "source" (`src`) 
 and processing is done by "destination" (`dst`). Because of that, `vmctl` doesn't actually know how much data will be 
