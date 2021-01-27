@@ -49,7 +49,7 @@ Features:
 
 `vmctl` supports the `influx` mode to migrate data from InfluxDB to VictoriaMetrics time-series database.
 
-See `./vmctl influx --help` for details.
+See `./vmctl influx --help` for details and full list of flags.
 
 To use migration tool please specify the InfluxDB address `--influx-addr`, the database `--influx-database` and VictoriaMetrics address `--vm-addr`.
 Flag `--vm-addr` for single-node VM is usually equal to `--httpListenAddr`, and for cluster version
@@ -118,7 +118,8 @@ The first step of application is to select all available timeseries
 for given database and retention. User may specify additional filtering
 condition via `--influx-filter-series` flag. For example:
 ```
-./vmctl influx --influx-database benchmark --influx-filter-series "on benchmark from cpu where hostname='host_1703'"
+./vmctl influx --influx-database benchmark \
+  --influx-filter-series "on benchmark from cpu where hostname='host_1703'"
 InfluxDB import mode
 2020/01/26 14:23:29 Exploring scheme for database "benchmark"
 2020/01/26 14:23:29 fetching fields: command: "show field keys"; database: "benchmark"; retention: "autogen"
@@ -149,7 +150,7 @@ You may find useful a 3rd party solution for this - https://github.com/jonppe/in
 `vmctl` supports the `prometheus` mode for migrating data from Prometheus to VictoriaMetrics time-series database.
 Migration is based on reading Prometheus snapshot, which is basically a hard-link to Prometheus data files.
 
-See `./vmctl prometheus --help` for details.
+See `./vmctl prometheus --help` for details and full list of flags.
 
 To use migration tool please specify the path to Prometheus snapshot `--prom-snapshot` and VictoriaMetrics address `--vm-addr`.
 More about Prometheus snapshots may be found [here](https://www.robustperception.io/taking-snapshots-of-prometheus-data).
@@ -172,7 +173,10 @@ The data processed in chunks and then sent to VM.
 The importing process example for local installation of Prometheus 
 and single-node VictoriaMetrics(`http://localhost:8428`):
 ```
-./vmctl prometheus --prom-snapshot=/path/to/snapshot --vm-concurrency 1 --vm-batch-size=200000 --prom-concurrency 3
+./vmctl prometheus --prom-snapshot=/path/to/snapshot \
+  --vm-concurrency=1 \
+  --vm-batch-size=200000 \
+  --prom-concurrency=3
 Prometheus import mode
 Prometheus snapshot stats:
   blocks found: 14;
@@ -215,7 +219,9 @@ overlapping time range.
 
 Example of applying time filter:
 ```
-./vmctl prometheus --prom-snapshot=/path/to/snapshot --prom-filter-time-start=2020-02-07T00:07:01Z --prom-filter-time-end=2020-02-11T00:07:01Z
+./vmctl prometheus --prom-snapshot=/path/to/snapshot \
+  --prom-filter-time-start=2020-02-07T00:07:01Z \
+  --prom-filter-time-end=2020-02-11T00:07:01Z
 Prometheus import mode
 Prometheus snapshot stats:
   blocks found: 2;
@@ -238,7 +244,11 @@ Filtering by timeseries is configured with following flags:
 
 For example:
 ```
-./vmctl prometheus --prom-snapshot=/path/to/snapshot --prom-filter-label="__name__" --prom-filter-label-value="promhttp.*" --prom-filter-time-start=2020-02-07T00:07:01Z --prom-filter-time-end=2020-02-11T00:07:01Z
+./vmctl prometheus --prom-snapshot=/path/to/snapshot \
+  --prom-filter-label="__name__" \
+  --prom-filter-label-value="promhttp.*" \
+  --prom-filter-time-start=2020-02-07T00:07:01Z \
+  --prom-filter-time-end=2020-02-11T00:07:01Z
 Prometheus import mode
 Prometheus snapshot stats:
   blocks found: 2;
@@ -312,14 +322,17 @@ and provides the most efficient way to migrate data between VM instances: single
 single to cluster and vice versa. Please note that both instances (source and destination) should be of v1.42.0
 or higher.
 
-See `./vmctl vm-native --help` for details.
+See `./vmctl vm-native --help` for details and full list of flags.
 
 In this mode `vmctl` acts as a proxy between two VM instances, where time series filtering is done by "source" (`src`) 
 and processing is done by "destination" (`dst`). Because of that, `vmctl` doesn't actually know how much data will be 
 processed and can't show the progress bar. It will show the current processing speed and total number of processed bytes:
 
 ```
-./vmctl vm-native --vm-native-src-addr=http://localhost:8528  --vm-native-dst-addr=http://localhost:8428 --vm-native-filter-match='{job="vmagent"}'
+./vmctl vm-native --vm-native-src-addr=http://localhost:8528  \
+  --vm-native-dst-addr=http://localhost:8428 \
+  --vm-native-filter-match='{job="vmagent"}' \
+  --vm-native-filter-time-start='2020-01-01T20:07:00Z'
 VictoriaMetrics Native import mode
 Initing export pipe from "http://localhost:8528" with filters: 
         filter: match[]={job="vmagent"}
